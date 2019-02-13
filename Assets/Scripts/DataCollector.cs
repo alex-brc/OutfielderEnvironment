@@ -8,19 +8,13 @@ public class DataCollector : MonoBehaviour
     public enum Type { GameObject, Fove };
 
     public Type type;
+
+    [Header("References")]
     public DataWriter writer;
-
-    private FoveInterface fove;
-
-    void Start()
-    {
-        // Initialise the fove interface object if we're recording the FOVE
-        if (type == Type.Fove)
-            fove = gameObject.GetComponent<FoveInterface>();
-    } 
-
-    // Send data to the writer every frame.
-    void Update()
+    public FoveInterface fove;
+    
+    // Send data to the writer every physics update.
+    void FixedUpdate()
     {
         // If the writer is off don't write anything. This is only a thing inside the editor for testing purposes.
         if (!writer.isActive())

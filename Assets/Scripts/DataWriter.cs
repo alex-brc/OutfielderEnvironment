@@ -5,15 +5,22 @@ using System.Text;
 using UnityEngine;
 using Fove.Managed;
 using System;
+using RockVR.Video;
 
 public class DataWriter : MonoBehaviour
 {
     private const int MIN_NUM = 10000000, MAX_NUM = 20000000;
 
+    [Header("Controls")]
     public bool active = true;
+    [Tooltip("Relative path to the folder where this writer saves its data (folder structure will be created if necessary)")]
     public string rootDataPath;
+    [Tooltip("Time in seconds between file writes")]
     public float writeInterval = 1;
+
+    [Header("References")]
     public GameObject baseball;
+    public FoveInterface fove;
     
     private StringBuilder stringBuilder;
     private string dataPath;
@@ -66,11 +73,15 @@ public class DataWriter : MonoBehaviour
         Directory.CreateDirectory(dataPath);
     }
 
-    public void StartNewTest(int testNumber)
+    public void StartNewTest(int testNumber, TestCase.Type type)
     {
         // Make the file name and directory for this specific trial if it's not there
         fileName = dataPath + "\\Test_#"
             + testNumber;
+        if (type == TestCase.Type.Trial)
+            fileName += "\\TRIAL";
+        else if(type == TestCase.Type.Practice)
+            fileName += "\\PRACTICE";
         Directory.CreateDirectory(fileName);
         fileName += "\\" + System.DateTime.Now.ToString("HH-mm-ss") + ".txt";
 
@@ -87,6 +98,7 @@ public class DataWriter : MonoBehaviour
     public void CompleteTest(bool caught)
     {
         writerOn = false;
+
         // Make sure to clean out the stringbuilder when stopping
         File.AppendAllText(fileName, stringBuilder.ToString());
         stringBuilder = new StringBuilder();
@@ -158,28 +170,33 @@ public class DataWriter : MonoBehaviour
                 rotation.z +
             DataTags.MainSeparator;
 
+        /* This doesn't work for some reason, CHECK LATER !!!!!!!!!!!!!!!!!!!!!!!!!
         // Get ball screen coordinates and write them
-        Vector3 ballCoord = fove.GetNormalizedViewportPointForEye(baseball.transform.position, EFVR_Eye.Right);
+        Debug.Log(fove.ToString() + "is fove null? a:" + (fove == null));
+        Vector3 ballCoord = 
+            FoveInterface.
+            .GetNormalizedViewportPointForEye(
+                baseball
+                .transform.position, 
+                EFVR_Eye.Right);
+
         record += "" +
                 ballCoord.x + DataTags.SecondarySeparator +
                 ballCoord.y + DataTags.SecondarySeparator +
                 ballCoord.z +
             DataTags.MainSeparator;
-
+        */
         // Get ray
         FoveInterfaceBase.GazeConvergenceData gazeData = FoveInterface.GetGazeConvergence();
         // Get the world point where the covnergence is
         Vector3 worldConv = gazeData.ray.GetPoint(gazeData.distance);
         // Get the screen point for the world point
-        Vector3 screenConv = fove.GetNormalizedViewportPointForEye(worldConv, EFVR_Eye.Right);
+        Vector3 screenConv = fove.GetEyeCamera(EFVR_Eye.Right).WorldToScreenPoint(worldConv);
         // Write this into the record
         record += "" +
                 screenConv.x + DataTags.SecondarySeparator +
                 screenConv.y + DataTags.SecondarySeparator +
                 screenConv.z;
-
-        // Not tested
-        throw new NotImplementedException();
         
         if (Running())
             // Append the object string to stringbuilder

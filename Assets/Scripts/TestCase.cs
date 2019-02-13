@@ -5,13 +5,12 @@ using UnityEngine;
 
 public class TestCase : MonoBehaviour
 {
-    public GameObject baseball;
-    public GameObject player;
+    public enum Type { Practice, Trial, Robot };
 
-    internal TrialsManager manager;
     internal GameObject testGroup;
     internal Text testCounterBox;
     internal Text testStatus;
+    internal Vector3 initialVelocityVector;
     internal float timesPerformed = 0;
 
     public int testNumber;
@@ -21,14 +20,17 @@ public class TestCase : MonoBehaviour
     public float launchDeviation; // Degrees deviation from player
     public float timesToPerform; // No of times to perform this trial
     
+    [Header("References")]
+    public GameObject baseball;
+    public GameObject player;
+    public TrialsManager manager;
+
     void Start()
     {
-        manager = TrialsManager.GetTrialsManager();
-
         // Test group is the group object of this test case
         testGroup = gameObject;
         GameObject textCols = testGroup.transform.Find("TextCols").gameObject;
-
+        
         foreach (Transform child in textCols.transform)
         {
             switch (child.name)
@@ -44,29 +46,29 @@ public class TestCase : MonoBehaviour
                     break;
                 case "TimesCol":
                     testCounterBox = child.GetComponent<Text>();
-                    WriteCounter();
+                    testCounterBox.text = timesPerformed + "/" + timesToPerform;
                     break;
             }
         }
         // Get test status box
         testStatus = testGroup.transform.Find("TestStatus").GetComponent<Text>();
+
+        // Compute initial velocity vector
+        initialVelocityVector = Quaternion.Euler(0, launchDeviation, launchAngle) * Vector3.right;
+        // Apply magnitude
+        initialVelocityVector = initialVelocityVector.normalized * launchSpeed;
     }
 
-    public void LoadTest()
+    public void LoadButton()
     {
-        // Clean up
-        ResetScene();
-        // Load the manager with the test data
         manager.Load(this);
-        // Change status
+
         testStatus.text = "Loaded";
         testStatus.color = CustomColors.Orange;
     }
 
     public void CompleteTest(bool caught)
     {
-        // Cleanup 
-        ResetScene();
         // Add to counter
         timesPerformed++;
         // Write status
@@ -76,38 +78,21 @@ public class TestCase : MonoBehaviour
             testStatus.text = "No Catch";
         testStatus.color = CustomColors.Black;
         // Write counter
-        WriteCounter();
+        testCounterBox.text = timesPerformed + "/" + timesToPerform;
+        if (timesPerformed > timesToPerform)
+            testCounterBox.color = CustomColors.Green;
     }
 
-    public void ResetTest()
+    public void ResetCounter()
     {
-        testStatus.text = "Not Loaded";
-        testStatus.color = CustomColors.Black;
         testCounterBox.text = "0/" + timesToPerform;
         timesPerformed = 0;
     }
 
     public void UnloadTest()
     {
-        // Cleanup
-        ResetScene();
         // Change status
         testStatus.text = "Not Loaded";
         testStatus.color = CustomColors.Black;
-    }
-
-    internal void WriteCounter()
-    {
-        testCounterBox.text = timesPerformed + "/" + timesToPerform;
-    }
-
-    private void ResetScene()
-    {
-        // Reset player
-        player.transform.position = new Vector3(0, 1, -40);
-        player.transform.rotation = Quaternion.Euler(0, 0, 0);
-
-        // Reset baseball
-        baseball.transform.position = new Vector3(0, 2.6f, 60);
     }
 }

@@ -5,45 +5,40 @@ using UnityEngine;
 
 public class TrialsManager : MonoBehaviour
 {
-    public int secondsCountdownBeforeStart = 2;
+    public enum TrialStatus { Ready, CountingDown, TrialInProgress }
+    public enum PlayerStatus { InSandbox, InTrialArea }
+
+    [Header("Positions")]
+    public Vector3 catcherStartPosition;
+    public Vector3 baseballHomePosition;
+
+    [Header("Miscellaneous")]
+    public int secondsCountdownBeforeStart;
+
+    [Header("References")]
     public GameObject baseball;
     public UnityEngine.UI.Text infoBox;
+    public UnityEngine.UI.Text sandboxButtonText;
     public GameObject UI;
+    public GameObject overlay;
     public GameObject testsGroup;
-    public GameObject dataWriterObject;
+    public DataWriter dataWriter;
 
-    internal TestCase testCase;
+    internal TestCase loadedTestCase;
+    internal ICatcher catcher;
+    
+    internal TrialStatus trialStatus = TrialStatus.Ready;
 
-    private GameObject initial;
-    private DataWriter dataWriter;
-
-    void Start()
+    void FixedUpdate()
     {
-        initial = this.gameObject;
-        dataWriter = dataWriterObject.GetComponent<DataWriter>();
-    }
-
-    public static TrialsManager GetTrialsManager()
-    {
-        return GameObject
-            .FindGameObjectWithTag("ManagerHolder")
-            .GetComponent<TrialsManager>();
-    }
-
-    public void StartButton()
-    {
-        // If nothing's loaded, stop
-        if (testCase != null)
+        if (trialStatus == TrialStatus.TrialInProgress)
         {
-            StartCoroutine(StartTest());
+            catcher.Move();
         }
-        else
-        {
-            infoBox.text = "No test loaded";
-        }
+
     }
 
-    public void Reset()
+    public void ResetTests()
     {
         // Go through all the test cases and call reset on them
         foreach(Transform child in testsGroup.transform)
@@ -51,70 +46,112 @@ public class TrialsManager : MonoBehaviour
             if (child.gameObject.name.Contains("TestGroup"))
             {
                 // It's a test case. Reset it
-                child.GetComponent<TestCase>().ResetTest();
+                child.GetComponent<TestCase>().UnloadTest();
+                child.GetComponent<TestCase>().ResetCounter();
             }
         }
     }
 
-    internal IEnumerator StartTest()
-    {        
-        // Freeze ball 
-        baseball.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeAll;
-        // Start the world
-        Time.timeScale = 1;
-        // Give the player x seconds to adjust to the motion
-        float currCountdownValue = secondsCountdownBeforeStart;
+    internal IEnumerator StartTrial(TestCase.Type type)
+    {
+        if (loadedTestCase == null)
+        {
+            // No test loaded
+            infoBox.text = "No test loaded";
+            yield break;
+        }
+        // Update status
+        trialStatus = TrialStatus.CountingDown;
+        
+        // Bring catcher to field
+        catcher.GetRigidbody().position = catcherStartPosition;
+        
+        // Update text boxes
+        if(type == TestCase.Type.Trial)
+            loadedTestCase.testStatus.text = "In Progress";
+        else if (type == TestCase.Type.Practice)
+            loadedTestCase.testStatus.text = "Practice in Progress";
+        else if (type == TestCase.Type.Robot)
+            loadedTestCase.testStatus.text = "Robot trial in Progress";
+        loadedTestCase.testStatus.color = CustomColors.Red;
+        
+
+        // Hide the UI
+        UI.SetActive(false);
+        
+        // Activate the overlay
+        overlay.SetActive(true);
+        
         // Update counter color
-        infoBox.color = CustomColors.Orange;
+        infoBox.color = CustomColors.Black;
+
+        // Countdown
+        float currCountdownValue = secondsCountdownBeforeStart;
         while (currCountdownValue > 0)
         {
-            infoBox.text = currCountdownValue + "...";
+            infoBox.text = "Starting in " + currCountdownValue + "...";
             yield return new WaitForSeconds(1.0f);
             currCountdownValue--;
         }
-        // Update counter
-        infoBox.text = "Trial running";
+
+        if (type == TestCase.Type.Trial)
+            infoBox.text = "Trial running";
+        else if (type == TestCase.Type.Practice)
+            infoBox.text = "Practice trial running";
+        else if (type == TestCase.Type.Robot)
+            loadedTestCase.testStatus.text = "Robot trial runnning";
+
         // Update status
-        testCase.testStatus.text = "In Progress";
-        testCase.testStatus.color = CustomColors.Red;
+        trialStatus = TrialStatus.TrialInProgress;
+
+        if (type == TestCase.Type.Practice)
+            // Hack this a bit so the trial counter doesn't change
+            loadedTestCase.timesPerformed--;
+        
         // Start the data writer
-        dataWriter.StartNewTest(testCase.testNumber);
-        // Hide the UI
-        UI.SetActive(false);
-        // Launch the ball
-        baseball.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
-        baseball.transform.eulerAngles = new Vector3(-1 * testCase.launchAngle, 180 + testCase.launchDeviation, 0);
-        baseball.GetComponent<Rigidbody>().velocity = baseball.transform.forward * testCase.launchSpeed;
+        dataWriter.StartNewTest(loadedTestCase.testNumber, type);
+
+        // Apply the velocity specified
+        baseball.transform.position = baseballHomePosition;
+        baseball.GetComponent<Rigidbody>().velocity = loadedTestCase.initialVelocityVector;
     }
 
     internal void CompleteTrial(bool caught)
     {
-        testCase.CompleteTest(caught);
-        // Freeze time
-        Time.timeScale = 0;
+        loadedTestCase.CompleteTest(caught);
         // Update infobox
         infoBox.text = "Trial completed";
         infoBox.color = CustomColors.Black;
         // Show UI
         UI.SetActive(true);
+        // Hide overlay
+        overlay.SetActive(false);
         // Cleanup
-        Unload();
+        UnloadTest();
+        // Send catcher home
+        catcher.SendHome();
+        // Bring the ball to its place
+        baseball.transform.position = baseballHomePosition;
+        baseball.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        // Update status
+        trialStatus = TrialStatus.Ready;
+        // Stop writer
         dataWriter.CompleteTest(caught);
     }
 
     internal void Load(TestCase testCase)
     {
-        if(testCase != null)
+        if(loadedTestCase != null)
         {
             // Then some other test was previously loaded
-            testCase.UnloadTest();
-            Unload();
+            loadedTestCase.UnloadTest();
+            UnloadTest();
         }
-        this.testCase = testCase;
+        this.loadedTestCase = testCase;
     }
 
-    internal void Unload()
+    internal void UnloadTest()
     {
-        testCase = null;
+        loadedTestCase = null;
     }
 }

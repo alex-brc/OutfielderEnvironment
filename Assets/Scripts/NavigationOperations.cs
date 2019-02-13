@@ -5,6 +5,7 @@ using UnityEngine;
 // Attaches to UI
 public class NavigationOperations : MonoBehaviour
 {
+    [Header("References")]
     public GameObject setupMenu;
     public GameObject controlView;
 

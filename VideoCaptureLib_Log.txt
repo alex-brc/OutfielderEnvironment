@@ -1,0 +1,3 @@
+[LOG]: [FFmpegLib]: DEST URL: D:\Pictures\Downloads/RockVR/Video/2019-02-01-19-31-12-9YH95.mp4
+[LOG]: [FFmpegLib]: Build command: "D:/OutfielderEnvironment/OutfielderEnvironment/Assets/StreamingAssets/RockVR/FFmpeg/Windows/ffmpeg.exe" -f rawvideo -pix_fmt rgb24 -r 30 -s 640x480 -i - -y -preset ultrafast -pix_fmt yuv420p -vcodec libx264 -crf 18 -vf vflip -framerate 30 -tune zerolatency "D:\Pictures\Downloads/RockVR/Video/2019-02-01-19-31-12-9YH95.mp4"
+[LOG]: [FFmpegLib]: Write data bytes: 921600

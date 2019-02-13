@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class GazeTestMover : MonoBehaviour
 {
+    [Header("References")]
     public FoveInterface fove;
     
     // Update is called once per frame

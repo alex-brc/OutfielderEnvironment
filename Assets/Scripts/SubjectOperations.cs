@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class SubjectOperations : MonoBehaviour
 {
-
+    [Header("References")]
     public InputField subjectInputField;
     public Button setSubjectButton;
     public Button clearSubjectButton;
@@ -72,7 +72,7 @@ public class SubjectOperations : MonoBehaviour
         statusText.text = "Subject cleared";
         statusText.color = CustomColors.Black;
         // Also reset the trials
-        trialsManager.Reset();
+        trialsManager.ResetTests();
         // Also reset the dataWriter
         dataWriter.Reset();
     }

@@ -2,36 +2,61 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour {
+public class PlayerController : MonoBehaviour, ICatcher
+{
+    
     public float speed = 2;
     public float maxSpeed = 6;
     public float rotationSpeed = 30;
 
+    public Vector3 homePosition;
+    public TrialsManager manager;
 
-    private Rigidbody rb;
+    private Rigidbody rigidbody;
 
     void Start() {
-    	rb = GetComponent<Rigidbody>();
+    	rigidbody = GetComponent<Rigidbody>();
+    }
+    
+    public void StartButton()
+    {
+        manager.catcher = this;
+        StartCoroutine(manager.StartTrial(TestCase.Type.Trial));
     }
 
-    // Physics goes here
-    void FixedUpdate() {
-    	// These are in -1..1
-    	float moveHor = Input.GetAxis("Horizontal"); 
-    	float moveVer = Input.GetAxis("Vertical");
-        Debug.Log("Hor:" + moveHor + " ver:" + moveVer);
+    public void StartPracticeButton()
+    {
+        manager.catcher = this;
+        StartCoroutine(manager.StartTrial(TestCase.Type.Practice));
+    }
+
+    public void Move()
+    {
+        // These are in -1..1
+        float moveHor = Input.GetAxis("Horizontal");
+        float moveVer = Input.GetAxis("Vertical");
 
         // Move in global directions
         Vector3 movement = new Vector3(
-    		moveHor,
-    		0,
+            moveHor,
+            0,
             moveVer);
 
         // Apply force
-        rb.AddForce(movement * speed);
+        rigidbody.AddForce(movement * speed);
         // Limit top speed
-        rb.velocity = Vector3.ClampMagnitude(rb.velocity, maxSpeed);
-
-
+        rigidbody.velocity = Vector3.ClampMagnitude(rigidbody.velocity, maxSpeed);
     }
- }
+
+    public void SendHome()
+    {
+        rigidbody.position = homePosition;
+        rigidbody.velocity = Vector3.zero;
+        rigidbody.rotation = Quaternion.Euler(0,0,0);
+    }
+
+    public Rigidbody GetRigidbody()
+    {
+        return rigidbody;
+    }
+}

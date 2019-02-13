@@ -4,16 +4,20 @@ using UnityEngine;
 
 public class HotkeyScript : MonoBehaviour
 {
+    [Header("References")]
     public GameObject UI;
-    public KeyCode key = KeyCode.Tab;
+    public GameObject overlay;
+    public KeyCode toggleUIKey = KeyCode.Tab;
     
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyUp(key))
+        if (Input.GetKeyUp(toggleUIKey))
         {
-            // Togle UI active state
+            // Toggle UI active state
             UI.SetActive(!UI.activeSelf);
+            // Toggle overlay
+            overlay.SetActive(!overlay.activeSelf);
         }
     }
 }
