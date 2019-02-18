@@ -8,6 +8,11 @@ public class TrialsManager : MonoBehaviour
     public enum TrialStatus { Ready, CountingDown, TrialInProgress }
     public enum PlayerStatus { InSandbox, InTrialArea }
 
+    [Header("Test case options")]
+    public Vector3 firstTestPosition;
+    public float verticalOffset;
+    public TestCase[] testCases;
+
     [Header("Positions")]
     public Vector3 catcherStartPosition;
     public Vector3 baseballHomePosition;
@@ -36,20 +41,6 @@ public class TrialsManager : MonoBehaviour
             catcher.Move();
         }
 
-    }
-
-    public void ResetTests()
-    {
-        // Go through all the test cases and call reset on them
-        foreach(Transform child in testsGroup.transform)
-        {
-            if (child.gameObject.name.Contains("TestGroup"))
-            {
-                // It's a test case. Reset it
-                child.GetComponent<TestCase>().UnloadTest();
-                child.GetComponent<TestCase>().ResetCounter();
-            }
-        }
     }
 
     internal IEnumerator StartTrial(TestCase.Type type)
@@ -139,7 +130,7 @@ public class TrialsManager : MonoBehaviour
         dataWriter.CompleteTest(caught);
     }
 
-    internal void Load(TestCase testCase)
+    internal void LoadTest(TestCase testCase)
     {
         if(loadedTestCase != null)
         {
@@ -153,5 +144,19 @@ public class TrialsManager : MonoBehaviour
     internal void UnloadTest()
     {
         loadedTestCase = null;
+    }
+
+    public void ResetTests()
+    {
+        // Go through all the test cases and call reset on them
+        foreach (Transform child in testsGroup.transform)
+        {
+            if (child.gameObject.name.Contains("TestGroup"))
+            {
+                // It's a test case. Reset it
+                child.GetComponent<TestCase>().UnloadTest();
+                child.GetComponent<TestCase>().ResetCounter();
+            }
+        }
     }
 }

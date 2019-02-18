@@ -11,6 +11,8 @@ using UnityEngine;
 [RequireComponent(typeof(LineRenderer))]
 public class RadiusDisplay : MonoBehaviour
 {
+    public GameObject target;
+    
     [Range(0, 50)]
     public int segments = 50;
 
@@ -35,8 +37,8 @@ public class RadiusDisplay : MonoBehaviour
 
         for (int i = 0; i < (segments + 1); i++)
         {
-            x = transform.position.x + Mathf.Sin(Mathf.Deg2Rad * angle) * radius;
-            z = transform.position.z + Mathf.Cos(Mathf.Deg2Rad * angle) * radius;
+            x = target.transform.position.x + Mathf.Sin(Mathf.Deg2Rad * angle) * radius;
+            z = target.transform.position.z + Mathf.Cos(Mathf.Deg2Rad * angle) * radius;
 
             line.SetPosition(i, new Vector3(x, 0, z));
 

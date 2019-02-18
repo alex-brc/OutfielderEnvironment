@@ -3,33 +3,40 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine;
 
-public class TestCase : MonoBehaviour
+[System.Serializable]
+public class TestCase : System.Object
 {
     public enum Type { Practice, Trial, Robot };
+    
+    public float launchSpeed; // Meters per second
+    public float launchAngle; // Degrees from plane
+    public float launchDeviation; // Degrees deviation from player
+    public float timesToPerform; // No of times to perform this trial
 
-    internal GameObject testGroup;
+    internal int testNumber;
+    internal GameObject testCaseObject;
+    internal Button loadButton;
+    internal Button unloadButton;
     internal Text testCounterBox;
     internal Text testStatus;
     internal Vector3 initialVelocityVector;
     internal float timesPerformed = 0;
 
-    public int testNumber;
-    [Header("Test case parameters")]
-    public float launchSpeed; // Meters per second
-    public float launchAngle; // Degrees from plane
-    public float launchDeviation; // Degrees deviation from player
-    public float timesToPerform; // No of times to perform this trial
-    
-    [Header("References")]
-    public GameObject baseball;
-    public GameObject player;
-    public TrialsManager manager;
+    private TrialsManager manager;
 
-    void Start()
+    public void Initialise(GameObject gameObject, int testNumber, TrialsManager manager)
     {
-        // Test group is the group object of this test case
-        testGroup = gameObject;
-        GameObject textCols = testGroup.transform.Find("TextCols").gameObject;
+        testCaseObject = gameObject;
+        this.manager = manager;
+        this.testNumber = testNumber;
+
+        // Link buttons
+        loadButton = testCaseObject.transform.Find("LoadButton").GetComponent<Button>();
+        loadButton.onClick.AddListener(LoadButton);
+        unloadButton = testCaseObject.transform.Find("UnloadButton").GetComponent<Button>();
+        unloadButton.onClick.AddListener(UnloadButton);
+        
+        GameObject textCols = testCaseObject.transform.Find("TextCols").gameObject;
         
         foreach (Transform child in textCols.transform)
         {
@@ -48,23 +55,35 @@ public class TestCase : MonoBehaviour
                     testCounterBox = child.GetComponent<Text>();
                     testCounterBox.text = timesPerformed + "/" + timesToPerform;
                     break;
+                case "NumCol":
+                    child.GetComponent<Text>().text = "#" + testNumber;
+                    break;
             }
         }
         // Get test status box
-        testStatus = testGroup.transform.Find("TestStatus").GetComponent<Text>();
+        testStatus = testCaseObject.transform.Find("TestStatus").GetComponent<Text>();
 
         // Compute initial velocity vector
-        initialVelocityVector = Quaternion.Euler(0, launchDeviation, launchAngle) * Vector3.right;
+        initialVelocityVector = Quaternion.Euler(0, -launchDeviation, launchAngle) * Vector3.right;
         // Apply magnitude
         initialVelocityVector = initialVelocityVector.normalized * launchSpeed;
     }
 
     public void LoadButton()
     {
-        manager.Load(this);
+        manager.LoadTest(this);
 
         testStatus.text = "Loaded";
         testStatus.color = CustomColors.Orange;
+    }
+
+    public void UnloadButton()
+    {
+        manager.UnloadTest();
+        
+        // Change status
+        testStatus.text = "Not Loaded";
+        testStatus.color = CustomColors.Black;
     }
 
     public void CompleteTest(bool caught)

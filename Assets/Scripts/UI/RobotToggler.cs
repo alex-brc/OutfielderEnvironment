@@ -7,7 +7,7 @@ public class RobotToggler : MonoBehaviour
 {
     [Header("References")]
     public Toggle toggler;
-    public GameObject OACButton1;
+    public GameObject[] buttons;
 
 
     void Start()
@@ -21,13 +21,13 @@ public class RobotToggler : MonoBehaviour
     {
         if (on)
         {
-            // Show all the buttons
-            OACButton1.SetActive(true);
+            foreach (GameObject go in buttons)
+                go.SetActive(true);
         }
         else
         {
-            // Hide all the buttons
-            OACButton1.SetActive(false);
+            foreach (GameObject go in buttons)
+                go.SetActive(false);
         }
     }
 }
