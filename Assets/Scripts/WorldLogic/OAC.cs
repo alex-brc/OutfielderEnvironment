@@ -102,14 +102,15 @@ public class OAC : MonoBehaviour, ICatcher
         if (manager.loadedTestCase == null)
             return;
 
-        // Compute K
-        // For adapting into the planar version of OAC, we replace xbc' with the launch speed *within the plane of flight*
-        float temp = new Vector3(manager.loadedTestCase.initialVelocityVector.x,
+        // Compute K, assuming ball is always launching from (0,1,0) and catcher is stationary (and grounded) at first
+        float xzVelocity = new Vector3(manager.loadedTestCase.initialVelocityVector.x,
                                  0,
                                  manager.loadedTestCase.initialVelocityVector.z)
-                     .magnitude; 
-        // Assuming ball is always launching from (0,1,0) and catcher is stationary at first
-        K = manager.loadedTestCase.initialVelocityVector.y + temp / manager.catcherStartPosition.x;
+                     .magnitude;
+        deltaP0 = (manager.baseballHomePosition - manager.catcherStartPosition).magnitude;
+        K = manager.loadedTestCase.initialVelocityVector.y // divided by yb0 = 1
+            -
+            xzVelocity / deltaP0;
 
         // Get H, the angular velocity from the linear velocity (in degrees), using 
         // the velocity vector of the ball projected onto the z axis. This is adjusted, 
@@ -176,23 +177,26 @@ public class OAC : MonoBehaviour, ICatcher
         return ballProjected + ballToPoint;
     }
 
+    private float deltaP0;
     /// <summary>
     /// Returns the radius of the circle which contains the points from which 
-    /// we can achieve correct alpha angles according to the OAC strategy. 
+    /// we can achieve the correct alpha angles according to the OAC strategy. 
+    /// This assumes the ball always launches from (0,yb0,0)
     /// </summary>
     /// <returns>A float representing the radius</returns>
     private float GetAlphaRadius()
     {
-        return (GetAlphaPosition() -
-                new Vector3(baseballRb.position.x, 0, baseballRb.position.z)
-                ).magnitude;
+        return deltaP0 * baseballRb.position.y
+               / ( manager.baseballHomePosition.y * (1 + K * (Time.time - startingTime)));
     }
-    
+
     private Vector3 tempBaseballPos, tempCatcherPos;
     /// <summary>
     /// Computes the position inside the ball's flight plane predicted
     /// by the OAC strategy that provides the correct alpha angle.
     /// </summary>
+    /// <returns>A Vector3 representing the position</returns>
+    [Obsolete("Functional, but should never be used. Instead, use GetAlphaRadius() to obtain the distance from the ball and apply a direction.")]
     private Vector3 GetAlphaPosition()
     {
         Vector3 result = new Vector3();
@@ -221,6 +225,7 @@ public class OAC : MonoBehaviour, ICatcher
     /// </summary>
     /// <param name="vector">The vector to be rotated</param>
     /// <returns>The circular projection onto the XY plane</returns>
+    [Obsolete("This method is only used in deprecated methods.")]
     private Vector3 RotateIntoXY(Vector3 vector)
     {
         // Isolate the vector inside the XZ plane and project it onto the X axis
@@ -240,6 +245,7 @@ public class OAC : MonoBehaviour, ICatcher
     /// <param name="Point1">The point to be projected</param>
     /// <param name="Point2">The point which gives to line to project upon</param>
     /// <returns>The circular projection of Point1 onto the line (O,Point2)</returns>
+    [Obsolete("This method is only used in deprecated methods.")]
     private Vector3 CircularProjection(Vector3 Point1, Vector3 Point2)
     {
         return Point2.normalized * Point1.magnitude;
