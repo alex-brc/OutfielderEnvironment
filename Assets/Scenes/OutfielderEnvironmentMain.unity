@@ -4057,6 +4057,18 @@ MonoBehaviour:
     launchAngle: 80
     launchDeviation: 30
     timesToPerform: 1
+  - launchSpeed: 30
+    launchAngle: 60
+    launchDeviation: 30
+    timesToPerform: 1
+  - launchSpeed: 33
+    launchAngle: 70
+    launchDeviation: -20
+    timesToPerform: 1
+  - launchSpeed: 40
+    launchAngle: 80
+    launchDeviation: -15
+    timesToPerform: 1
   catcherStartPosition: {x: 70, y: 0, z: 0}
   baseballHomePosition: {x: 0, y: 1, z: 0}
   secondsCountdownBeforeStart: 2

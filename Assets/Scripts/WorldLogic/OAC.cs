@@ -50,8 +50,6 @@ public class OAC : MonoBehaviour, ICatcher
 
     private float sqrTopVelocity;
     private float startingTime;
-    private float K; // A constant that depends on the ball's initial conditions.
-    private float H; // Angular velocity of the ball relative to the stationary catcher
 
     // Start is called before the first frame update
     void Start()
@@ -66,7 +64,7 @@ public class OAC : MonoBehaviour, ICatcher
     public void Move()
     {
         // debug
-        Vector3 p = GetGOACPoint();
+        Vector3 p = GetDeltaPoint();
         radiusDisplay.radius = GetAlphaRadius();
         lineDisplay.pointA = new Vector3(baseballRb.position.x, 0, baseballRb.position.z);
         lineDisplay.pointB = p;
@@ -102,27 +100,18 @@ public class OAC : MonoBehaviour, ICatcher
         if (manager.loadedTestCase == null)
             return;
 
-        // Compute K, assuming ball is always launching from (0,1,0) and catcher is stationary (and grounded) at first
+        // Compute K and H, assuming ball is always launching from (0,yb0,0) and catcher is stationary (and grounded) at first
         float xzVelocity = new Vector3(manager.loadedTestCase.initialVelocityVector.x,
                                  0,
                                  manager.loadedTestCase.initialVelocityVector.z)
                      .magnitude;
         deltaP0 = (manager.baseballHomePosition - manager.catcherStartPosition).magnitude;
-        K = manager.loadedTestCase.initialVelocityVector.y // divided by yb0 = 1
+
+        K = manager.loadedTestCase.initialVelocityVector.y / manager.baseballHomePosition.y // divided by yb0 = 1
             -
             xzVelocity / deltaP0;
 
-        // Get H, the angular velocity from the linear velocity (in degrees), using 
-        // the velocity vector of the ball projected onto the z axis. This is adjusted, 
-        // since it doesn't really matter what the velocity is, just that it's constant
-        H = angularVelocityModifier * 
-            360f * new Vector3(
-                0,
-                0, 
-                manager.loadedTestCase.initialVelocityVector.z)
-            .magnitude              
-            /
-            catcherRb.position.x;
+        H = manager.loadedTestCase.initialVelocityVector.z / manager.catcherStartPosition.x;
 
         // Start
         manager.catcher = this;
@@ -148,36 +137,29 @@ public class OAC : MonoBehaviour, ICatcher
         catcherRb.transform.LookAt(new Vector3(baseballRb.transform.position.x, 0, baseballRb.transform.position.z));
     }
 
-    private float d, q;
-    private Vector3 ballToPoint;
+    private float H;
     /// <summary>
-    /// Uses information about the correct alpha radius and d angle to give the correct point 
-    /// to reach for using the GOAC strategy.
+    /// Returns the correct catcher position as predicted by the GOAC algorithm.
     /// </summary>
-    /// <returns>A vector representing said point</returns>
-    private Vector3 GetGOACPoint()
+    private Vector3 GetDeltaPoint()
     {
-        // First get the correct angle d in degrees at current time, given by H * t, since ideally it is linear
-        d = H * (Time.time - startingTime) * -Mathf.Sign(manager.loadedTestCase.launchDeviation);
-        Debug.Log(d);
-        // This gives us the correct d line of equation:  z = tanD * (x - xb) + xb
-        // This line makes an angle q with the ball's plane of flight, which is
-        q = 180 - (d + manager.loadedTestCase.launchDeviation);
-        
-        // Also, we have the correct alpha circle with:   (x - xb)^2 + (z - zb)^2 = r^2
-        //
-        // Therefore our destination is at the intersection of the d line with alpha circle, which we can find by using
-        // some vector manipulation to avoid the complicated linear algebra computation. 
-        // 
-        // We take the vector from the ball to the origin, rotate it q degrees, then set its magnitude equal to the radius
-        Vector3 ballProjected = new Vector3(baseballRb.position.x, 0, baseballRb.position.z);
-        ballToPoint = Quaternion.Euler(0, -q, 0) * (-1 * ballProjected).normalized * GetAlphaRadius();
-
-        // Add this vector to the ball position to obtain the correct GOAC point
-        return ballProjected + ballToPoint;
+        // The resulting numbers are relative to the ball position. 
+        // We will add this to the ball position to get the catcher position.
+        Vector3 ballToPoint = new Vector3();
+        // First, find delta x
+        float t = Time.time - startingTime;
+        ballToPoint.x = GetAlphaRadius()
+                       / (H * H * t * t + 1);
+        // Now find delta z
+        ballToPoint.z = ballToPoint.x * H * t;
+        // Finally find and return the catcher position
+        return new Vector3(baseballRb.position.x,
+                        0,
+                        baseballRb.position.z)
+               + ballToPoint;
     }
 
-    private float deltaP0;
+    private float deltaP0, K;
     /// <summary>
     /// Returns the radius of the circle which contains the points from which 
     /// we can achieve the correct alpha angles according to the OAC strategy. 
@@ -219,7 +201,49 @@ public class OAC : MonoBehaviour, ICatcher
 
         return result;
     }
-    
+
+    private float d, q;
+    private Vector3 ballToPoint;
+    /// <summary>
+    /// Uses information about the correct alpha radius and d angle to give the correct point 
+    /// to reach for using the GOAC strategy.
+    /// </summary>
+    /// <returns>A vector representing said point</returns>
+    [Obsolete("Functional, but hacky. Use GetDeltaPoint() instead for the mathematical approach. ")]
+    private Vector3 GetGOACPoint()
+    {
+        // Get H, the angular velocity from the linear velocity (in degrees), using 
+        // the velocity vector of the ball projected onto the z axis. This is adjusted, 
+        // since it doesn't really matter what the velocity is, just that it's constant
+        float H = angularVelocityModifier *
+            360f * new Vector3(
+                0,
+                0,
+                manager.loadedTestCase.initialVelocityVector.z)
+            .magnitude
+            /
+            catcherRb.position.x;
+
+        // First get the correct angle d in degrees at current time, given by H * t, since ideally it is linear
+        d = H * (Time.time - startingTime) * -Mathf.Sign(manager.loadedTestCase.launchDeviation);
+        Debug.Log(d);
+        // This gives us the correct d line of equation:  z = tanD * (x - xb) + xb
+        // This line makes an angle q with the ball's plane of flight, which is
+        q = 180 - (d + manager.loadedTestCase.launchDeviation);
+
+        // Also, we have the correct alpha circle with:   (x - xb)^2 + (z - zb)^2 = r^2
+        //
+        // Therefore our destination is at the intersection of the d line with alpha circle, which we can find by using
+        // some vector manipulation to avoid the complicated linear algebra computation. 
+        // 
+        // We take the vector from the ball to the origin, rotate it q degrees, then set its magnitude equal to the radius
+        Vector3 ballProjected = new Vector3(baseballRb.position.x, 0, baseballRb.position.z);
+        ballToPoint = Quaternion.Euler(0, -q, 0) * (-1 * ballProjected).normalized * GetAlphaRadius();
+
+        // Add this vector to the ball position to obtain the correct GOAC point
+        return ballProjected + ballToPoint;
+    }
+
     /// <summary>
     /// Rotates the given vector around the Y axis to obtain the "circular projection" onto the XY plane
     /// </summary>
