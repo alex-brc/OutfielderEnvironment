@@ -10,9 +10,9 @@ public class CustomPhysics : MonoBehaviour
 
 
     private Rigidbody rb;
-    private Vector3 lastVelocity = new Vector3();
-    private Vector3 rawAcceleration = new Vector3();
-    private Vector3 filteredAcceleration = new Vector3();
+    private Vector3 lastVelocity;
+    private Vector3 rawAcceleration;
+    private Vector3 filteredAcceleration;
     private Vector3[] prev = new Vector3[10];
 
     void Start()

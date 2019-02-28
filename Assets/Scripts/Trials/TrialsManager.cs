@@ -6,13 +6,13 @@ using UnityEngine;
 public class TrialsManager : MonoBehaviour
 {
     public enum TrialStatus { Ready, CountingDown, TrialInProgress }
-    public enum PlayerStatus { InSandbox, InTrialArea }
 
     [Header("Test case options")]
     public Vector3 firstTestPosition;
     public float verticalOffset;
-    public TestCase[] testCases;
-
+    public float maximumBallHeight = 20;
+    public float distanceToTargets = 4;
+    
     [Header("Positions")]
     public Vector3 catcherStartPosition;
     public Vector3 baseballHomePosition;
@@ -28,11 +28,19 @@ public class TrialsManager : MonoBehaviour
     public GameObject overlay;
     public GameObject testsGroup;
     public DataWriter dataWriter;
+    public FoveInterface fove;
 
     internal TestCase loadedTestCase;
+    internal TestCase[] testCases;
     internal ICatcher catcher;
-    
     internal TrialStatus trialStatus = TrialStatus.Ready;
+    internal float startingTime = 0;
+    internal float startingFrame = 0;
+    
+    void Start()
+    {
+        baseball.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeAll;
+    }
 
     void FixedUpdate()
     {
@@ -40,7 +48,6 @@ public class TrialsManager : MonoBehaviour
         {
             catcher.Move();
         }
-
     }
 
     internal IEnumerator StartTrial(TestCase.Type type)
@@ -66,7 +73,6 @@ public class TrialsManager : MonoBehaviour
             loadedTestCase.testStatus.text = "Robot trial in Progress";
         loadedTestCase.testStatus.color = CustomColors.Red;
         
-
         // Hide the UI
         UI.SetActive(false);
         
@@ -98,12 +104,17 @@ public class TrialsManager : MonoBehaviour
         if (type == TestCase.Type.Practice)
             // Hack this a bit so the trial counter doesn't change
             loadedTestCase.timesPerformed--;
-        
+
+        // Activate the data collector for the catcher
+        catcher.StartDataCollector();
         // Start the data writer
         dataWriter.StartNewTest(loadedTestCase.testNumber, type);
 
-        // Apply the velocity specified
-        baseball.transform.position = baseballHomePosition;
+        startingTime = Time.time;
+        startingFrame = Time.frameCount;
+
+        // Apply the velocity specified and unlock the ball
+        baseball.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
         baseball.GetComponent<Rigidbody>().velocity = loadedTestCase.initialVelocityVector;
     }
 
@@ -122,14 +133,16 @@ public class TrialsManager : MonoBehaviour
         // Send catcher home
         catcher.SendHome();
         // Bring the ball to its place
-        baseball.transform.position = baseballHomePosition;
         baseball.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        baseball.transform.position = baseballHomePosition;
         // Update status
         trialStatus = TrialStatus.Ready;
+        baseball.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeAll;
         // Stop writer
+        catcher.StopDataCollector();
         dataWriter.CompleteTest(caught);
     }
-
+    
     internal void LoadTest(TestCase testCase)
     {
         if(loadedTestCase != null)

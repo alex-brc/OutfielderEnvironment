@@ -25,6 +25,6 @@ public class PathDisplay : MonoBehaviour
 
     private void Clear()
     {
-        line.SetPositions(new Vector3[10000]);
+        line.positionCount = 0;
     }
 }

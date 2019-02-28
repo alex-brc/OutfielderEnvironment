@@ -14,7 +14,7 @@ public class DataCollector : MonoBehaviour
     public FoveInterface fove;
     
     // Send data to the writer every physics update.
-    void FixedUpdate()
+    void Update()
     {
         // If the writer is off don't write anything. This is only a thing inside the editor for testing purposes.
         if (!writer.isActive())

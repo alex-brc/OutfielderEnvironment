@@ -37,40 +37,55 @@ public class DataWriter : MonoBehaviour
     {
         rand = new System.Random();
     }
-    
-    public bool isActive()
-    {
-        return active;
-    }
-
-    public bool Running()
-    {
-        return writerOn;
-    }
 
     public void Init(string subjectName)
     {
-        // Set the dataPath. Folder structure:
-        //
-        // Data
-        //     | <today's date>
-        //                     | <subject's name>
-        //                                        | Test_#<test number>
-        //                                                          | <trial starting hour>.txt
-        //                                                          | <other trial starting hour>.txt
-        //                                                          | ...
-        //                                        | Test_#<other test number>
-        //                                        | ...
-        //                     | <other subject's name>
-        //                     | ...
-        //     | <other dates>
-        //     | ...
-
-        //
         dataPath = rootDataPath + "\\" + DateTime.Now.ToString("dd-MM-yy") 
             + "\\" + subjectName.Replace(' ','_');
         // Create subject folder
         Directory.CreateDirectory(dataPath);
+    }
+
+    public static String ExtractObjectPositionsForMatlab(String fileName, String gameObjectName)
+    {
+        StringBuilder X = new StringBuilder().Append("xPos = [ ");
+        StringBuilder Y = new StringBuilder().Append("yPos = [ ");
+        StringBuilder Z = new StringBuilder().Append("zPos = [ ");
+        StringBuilder F = new StringBuilder().Append("frame = [ ");
+        StringBuilder T = new StringBuilder().Append("time = [ ");
+
+        using (StreamReader sr = new StreamReader(fileName))
+        {
+            while(sr.Peek() >= 0)
+            {
+                string[] tokens = sr.ReadLine().Split(':');
+                if (!tokens[3].Equals(gameObjectName))
+                    continue;
+
+                // Append time and frame
+                F.Append(" " + tokens[0]);
+                T.Append(" " + tokens[1]);
+
+                // Append positions
+                string[] positions = tokens[4].Split(';');
+                X.Append(" " + positions[0]);
+                Y.Append(" " + positions[1]);
+                Z.Append(" " + positions[2]);
+            }
+        }
+        
+        F.Append("];");
+        T.Append("];");
+        X.Append("];");
+        Y.Append("];");
+        Z.Append("];");
+
+        return
+            X.ToString() + '\n' +
+            Y.ToString() + '\n' +
+            Z.ToString() + '\n' +
+            F.ToString() + '\n' +
+            T.ToString() + '\n' ;
     }
 
     public void StartNewTest(int testNumber, TestCase.Type type)
@@ -129,17 +144,11 @@ public class DataWriter : MonoBehaviour
             latestTime + DataTags.MainSeparator +
             DataTags.EntryTypes.GameObject + DataTags.MainSeparator +
             gameObject.name + DataTags.MainSeparator +
-                gameObject.transform.position.x + DataTags.SecondarySeparator +
-                gameObject.transform.position.y + DataTags.SecondarySeparator +
-                gameObject.transform.position.z +
+                gameObject.transform.position.ToRecordFormat() +
             DataTags.MainSeparator +
-                gameObject.transform.rotation.eulerAngles.x + DataTags.SecondarySeparator +
-                gameObject.transform.rotation.eulerAngles.y + DataTags.SecondarySeparator +
-                gameObject.transform.rotation.eulerAngles.z +
+                gameObject.transform.rotation.eulerAngles.ToRecordFormat() +
             DataTags.MainSeparator +
-                gameObject.GetComponent<Rigidbody>().velocity.x + DataTags.SecondarySeparator +
-                gameObject.GetComponent<Rigidbody>().velocity.y + DataTags.SecondarySeparator +
-                gameObject.GetComponent<Rigidbody>().velocity.z;
+                gameObject.GetComponent<Rigidbody>().velocity.ToRecordFormat();
 
         if (Running())
             // Append <frameNumber>:<timeTag>: to the object string and add to stringbuilder
@@ -161,13 +170,9 @@ public class DataWriter : MonoBehaviour
             latestTime + DataTags.MainSeparator +
             DataTags.EntryTypes.FOVE + DataTags.MainSeparator +
             "Fove Interface" + DataTags.MainSeparator +
-                lastPose.position.x + DataTags.SecondarySeparator +
-                lastPose.position.y + DataTags.SecondarySeparator +
-                lastPose.position.z +
+                lastPose.position.ToRecordFormat() +
             DataTags.MainSeparator +
-                rotation.x + DataTags.SecondarySeparator +
-                rotation.y + DataTags.SecondarySeparator +
-                rotation.z +
+                rotation.ToRecordFormat() +
             DataTags.MainSeparator;
 
         /* This doesn't work for some reason, CHECK LATER !!!!!!!!!!!!!!!!!!!!!!!!!
@@ -193,10 +198,7 @@ public class DataWriter : MonoBehaviour
         // Get the screen point for the world point
         Vector3 screenConv = fove.GetEyeCamera(EFVR_Eye.Right).WorldToScreenPoint(worldConv);
         // Write this into the record
-        record += "" +
-                screenConv.x + DataTags.SecondarySeparator +
-                screenConv.y + DataTags.SecondarySeparator +
-                screenConv.z;
+        record += screenConv.ToRecordFormat();
         
         if (Running())
             // Append the object string to stringbuilder
@@ -218,5 +220,15 @@ public class DataWriter : MonoBehaviour
         yield return new WaitForSeconds(writeInterval);
         if(Running())
             goto Loop;
+    }
+
+    public bool isActive()
+    {
+        return active;
+    }
+
+    public bool Running()
+    {
+        return writerOn;
     }
 }

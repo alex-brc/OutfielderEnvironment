@@ -18,5 +18,8 @@ public interface ICatcher
     /// Returns the rigidbody of this catcher.
     /// </summary>
     Rigidbody GetRigidbody();
+    
+    void StartDataCollector();
+    void StopDataCollector();
 
 }

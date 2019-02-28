@@ -9,6 +9,7 @@ using UnityEngine;
 /// Due to limitations in Unity, this single script offers multiple functionalities.
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(DataCollector))]
 public class OAC : MonoBehaviour, ICatcher
 {
     [Tooltip("Whether to apply movement contraints to the catcher.")]
@@ -66,8 +67,12 @@ public class OAC : MonoBehaviour, ICatcher
         // debug
         Vector3 p = GetDeltaPoint();
         radiusDisplay.radius = GetAlphaRadius();
-        lineDisplay.pointA = new Vector3(baseballRb.position.x, 0, baseballRb.position.z);
+        lineDisplay.pointA = baseballRb.position.XZ();
         lineDisplay.pointB = p;
+        // Log the current (real) delta angle to the delta graph
+        GraphDbg.Log(
+            "DeltaGraph",
+            Vector3.Angle(catcherRb.position - baseballRb.position.XZ() , -Vector3.right) - manager.loadedTestCase.launchDeviation);
 
         // Don't move if we need to skip updates
         if (Time.time - startingTime < timeToSkip)
@@ -84,27 +89,13 @@ public class OAC : MonoBehaviour, ICatcher
         }
     }
 
-    public void SendHome()
-    {
-        catcherRb.velocity = Vector3.zero;
-        catcherRb.position = homePosition;
-    }
-
-    public Rigidbody GetRigidbody()
-    {
-        return catcherRb;
-    }
-
     public void RobotButton()
     {
         if (manager.loadedTestCase == null)
             return;
 
         // Compute K and H, assuming ball is always launching from (0,yb0,0) and catcher is stationary (and grounded) at first
-        float xzVelocity = new Vector3(manager.loadedTestCase.initialVelocityVector.x,
-                                 0,
-                                 manager.loadedTestCase.initialVelocityVector.z)
-                     .magnitude;
+        float xzVelocity = manager.loadedTestCase.initialVelocityVector.XZ().magnitude;
         deltaP0 = (manager.baseballHomePosition - manager.catcherStartPosition).magnitude;
 
         K = manager.loadedTestCase.initialVelocityVector.y / manager.baseballHomePosition.y // divided by yb0 = 1
@@ -132,14 +123,11 @@ public class OAC : MonoBehaviour, ICatcher
 
         // Move the catcher
         catcherRb.velocity = (target - catcherRb.position).normalized * velocity;
-
-        // Also rotate it
-        catcherRb.transform.LookAt(new Vector3(baseballRb.transform.position.x, 0, baseballRb.transform.position.z));
     }
 
-    private float H;
+    private double H;
     /// <summary>
-    /// Returns the correct catcher position as predicted by the GOAC algorithm.
+    /// Returns the correct catcher position as predicted by the GOAC model.
     /// </summary>
     private Vector3 GetDeltaPoint()
     {
@@ -147,19 +135,41 @@ public class OAC : MonoBehaviour, ICatcher
         // We will add this to the ball position to get the catcher position.
         Vector3 ballToPoint = new Vector3();
         // First, find delta x
-        float t = Time.time - startingTime;
+        double t = Time.time - startingTime;
         ballToPoint.x = GetAlphaRadius()
-                       / (H * H * t * t + 1);
+                       / (float)(H * H * t * t + 1);
         // Now find delta z
-        ballToPoint.z = ballToPoint.x * H * t;
+        ballToPoint.z = ballToPoint.x * (float) (H * t);
+
         // Finally find and return the catcher position
-        return new Vector3(baseballRb.position.x,
-                        0,
-                        baseballRb.position.z)
+        return baseballRb.position.XZ()
                + ballToPoint;
     }
 
-    private float deltaP0, K;
+    public void SendHome()
+    {
+        catcherRb.velocity = Vector3.zero;
+        catcherRb.angularVelocity = Vector3.zero;
+        catcherRb.position = homePosition;
+    }
+
+    public Rigidbody GetRigidbody()
+    {
+        return catcherRb;
+    }
+
+    public void StartDataCollector()
+    {
+        gameObject.GetComponent<DataCollector>().enabled = true;
+    }
+
+    public void StopDataCollector()
+    {
+
+        gameObject.GetComponent<DataCollector>().enabled = false;
+    }
+
+    private double deltaP0, K;
     /// <summary>
     /// Returns the radius of the circle which contains the points from which 
     /// we can achieve the correct alpha angles according to the OAC strategy. 
@@ -168,8 +178,8 @@ public class OAC : MonoBehaviour, ICatcher
     /// <returns>A float representing the radius</returns>
     private float GetAlphaRadius()
     {
-        return deltaP0 * baseballRb.position.y
-               / ( manager.baseballHomePosition.y * (1 + K * (Time.time - startingTime)));
+        return (float)deltaP0 * baseballRb.position.y
+               / ( manager.baseballHomePosition.y * (1 + (float)K * (Time.time - startingTime)));
     }
 
     private Vector3 tempBaseballPos, tempCatcherPos;
@@ -190,14 +200,12 @@ public class OAC : MonoBehaviour, ICatcher
         // Now compute the correct X
         result.x = tempBaseballPos.x - tempBaseballPos.y *
             (manager.baseballHomePosition.x - manager.catcherStartPosition.x) /
-            (manager.baseballHomePosition.y * (1 + K * (Time.time - startingTime)));
+            (manager.baseballHomePosition.y * (1 + (float)K * (Time.time - startingTime)));
 
         // And rotate that around the Y axis into the flight plane of the ball
         result = CircularProjection(
             result, 
-            new Vector3(baseballRb.position.x,
-                        0,
-                        baseballRb.position.z));
+            baseballRb.position.XZ());
 
         return result;
     }
@@ -216,11 +224,7 @@ public class OAC : MonoBehaviour, ICatcher
         // the velocity vector of the ball projected onto the z axis. This is adjusted, 
         // since it doesn't really matter what the velocity is, just that it's constant
         float H = angularVelocityModifier *
-            360f * new Vector3(
-                0,
-                0,
-                manager.loadedTestCase.initialVelocityVector.z)
-            .magnitude
+            360f * manager.loadedTestCase.initialVelocityVector.z
             /
             catcherRb.position.x;
 
@@ -237,7 +241,7 @@ public class OAC : MonoBehaviour, ICatcher
         // some vector manipulation to avoid the complicated linear algebra computation. 
         // 
         // We take the vector from the ball to the origin, rotate it q degrees, then set its magnitude equal to the radius
-        Vector3 ballProjected = new Vector3(baseballRb.position.x, 0, baseballRb.position.z);
+        Vector3 ballProjected = baseballRb.position.XZ();
         ballToPoint = Quaternion.Euler(0, -q, 0) * (-1 * ballProjected).normalized * GetAlphaRadius();
 
         // Add this vector to the ball position to obtain the correct GOAC point
@@ -254,7 +258,7 @@ public class OAC : MonoBehaviour, ICatcher
     {
         // Isolate the vector inside the XZ plane and project it onto the X axis
         Vector3 result = CircularProjection(
-            new Vector3(vector.x, 0, vector.z),
+            vector.XZ(),
             Vector3.right);
         // Complete it with the original Y coordinate
         result.y = vector.y;
