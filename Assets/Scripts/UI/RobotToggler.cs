@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(Toggle))]
 public class RobotToggler : MonoBehaviour
 {
     [Header("References")]
-    public Toggle toggler;
     public GameObject[] buttons;
 
-
+    private Toggle toggler;
     void Start()
     {
+        toggler = transform.GetComponent<Toggle>();
         // Turn it off on start if it isn't
         toggler.isOn = false;
         ToggleValueChanged(false);
@@ -21,13 +22,13 @@ public class RobotToggler : MonoBehaviour
     {
         if (on)
         {
-            foreach (GameObject go in buttons)
-                go.SetActive(true);
+            foreach (GameObject button in buttons)
+                button.SetActive(true);
         }
         else
         {
-            foreach (GameObject go in buttons)
-                go.SetActive(false);
+            foreach (GameObject button in buttons)
+                button.SetActive(false);
         }
     }
 }

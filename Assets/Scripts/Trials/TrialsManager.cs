@@ -12,13 +12,15 @@ public class TrialsManager : MonoBehaviour
     public float verticalOffset;
     public float maximumBallHeight = 20;
     public float distanceToTargets = 4;
-    
+    public int trialRuns = 5;
+    public int practiceRuns = 2;
+
     [Header("Positions")]
     public Vector3 catcherStartPosition;
     public Vector3 baseballHomePosition;
 
     [Header("Miscellaneous")]
-    public int secondsCountdownBeforeStart;
+    public int pauseBetweenTrials;
 
     [Header("References")]
     public GameObject baseball;
@@ -50,7 +52,7 @@ public class TrialsManager : MonoBehaviour
         }
     }
 
-    internal IEnumerator StartTrial(TestCase.Type type)
+    internal IEnumerator StartTrial(TestCase.TrialType type)
     {
         if (loadedTestCase == null)
         {
@@ -63,27 +65,22 @@ public class TrialsManager : MonoBehaviour
         
         // Bring catcher to field
         catcher.GetRigidbody().position = catcherStartPosition;
+        catcher.GetRigidbody().transform.eulerAngles = new Vector3(0, -90, 0);
         
         // Update text boxes
-        if(type == TestCase.Type.Trial)
+        if(type == TestCase.TrialType.Trial)
             loadedTestCase.testStatus.text = "In Progress";
-        else if (type == TestCase.Type.Practice)
+        else if (type == TestCase.TrialType.Practice)
             loadedTestCase.testStatus.text = "Practice in Progress";
-        else if (type == TestCase.Type.Robot)
+        else if (type == TestCase.TrialType.Robot)
             loadedTestCase.testStatus.text = "Robot trial in Progress";
         loadedTestCase.testStatus.color = CustomColors.Red;
-        
-        // Hide the UI
-        UI.SetActive(false);
-        
-        // Activate the overlay
-        overlay.SetActive(true);
         
         // Update counter color
         infoBox.color = CustomColors.Black;
 
         // Countdown
-        float currCountdownValue = secondsCountdownBeforeStart;
+        float currCountdownValue = pauseBetweenTrials;
         while (currCountdownValue > 0)
         {
             infoBox.text = "Starting in " + currCountdownValue + "...";
@@ -91,20 +88,16 @@ public class TrialsManager : MonoBehaviour
             currCountdownValue--;
         }
 
-        if (type == TestCase.Type.Trial)
+        if (type == TestCase.TrialType.Trial)
             infoBox.text = "Trial running";
-        else if (type == TestCase.Type.Practice)
+        else if (type == TestCase.TrialType.Practice)
             infoBox.text = "Practice trial running";
-        else if (type == TestCase.Type.Robot)
+        else if (type == TestCase.TrialType.Robot)
             loadedTestCase.testStatus.text = "Robot trial runnning";
 
         // Update status
         trialStatus = TrialStatus.TrialInProgress;
-
-        if (type == TestCase.Type.Practice)
-            // Hack this a bit so the trial counter doesn't change
-            loadedTestCase.timesPerformed--;
-
+        
         // Activate the data collector for the catcher
         catcher.StartDataCollector();
         // Start the data writer
@@ -112,7 +105,7 @@ public class TrialsManager : MonoBehaviour
 
         startingTime = Time.time;
         startingFrame = Time.frameCount;
-
+        
         // Apply the velocity specified and unlock the ball
         baseball.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
         baseball.GetComponent<Rigidbody>().velocity = loadedTestCase.initialVelocityVector;
@@ -124,10 +117,6 @@ public class TrialsManager : MonoBehaviour
         // Update infobox
         infoBox.text = "Trial completed";
         infoBox.color = CustomColors.Black;
-        // Show UI
-        UI.SetActive(true);
-        // Hide overlay
-        overlay.SetActive(false);
         // Cleanup
         UnloadTest();
         // Send catcher home
@@ -168,7 +157,6 @@ public class TrialsManager : MonoBehaviour
             {
                 // It's a test case. Reset it
                 child.GetComponent<TestCase>().UnloadTest();
-                child.GetComponent<TestCase>().ResetCounter();
             }
         }
     }

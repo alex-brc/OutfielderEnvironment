@@ -11,34 +11,26 @@ public class SubjectOperations : MonoBehaviour
     public Button clearSubjectButton;
     public Button controlViewButton;
     public Text statusText;
-    public GameObject managerHolder;
-    public GameObject dataWriterObject;
+    public TrialsManager trialsManager;
+    public DataWriter dataWriter;
 
     bool hasSubject;
     internal string subjectName;
 
-    private DataWriter dataWriter;
-    private TrialsManager trialsManager;
-
     void Start()
     {
-        trialsManager = managerHolder.GetComponent<TrialsManager>();
-        dataWriter = dataWriterObject.GetComponent<DataWriter>();
-
         hasSubject = false;
         clearSubjectButton.interactable = false;
         controlViewButton.interactable = false;
     }
+
     public void SetSubject()
     {
-        Text txtComponent = subjectInputField.transform
-                .Find("Placeholder").gameObject
-                .GetComponent<Text>();
-
         if (subjectInputField.text.Equals(""))
         {
             // Then field is empty, must have something
-            txtComponent.text = "You must insert any name for the subject.";
+            statusText.text = "Fields empty";
+            statusText.color = CustomColors.Red;
             return;
         }
 

@@ -9,8 +9,6 @@ using RockVR.Video;
 
 public class DataWriter : MonoBehaviour
 {
-    private const int MIN_NUM = 10000000, MAX_NUM = 20000000;
-
     [Header("Controls")]
     public bool active = true;
     [Tooltip("Relative path to the folder where this writer saves its data (folder structure will be created if necessary)")]
@@ -31,12 +29,6 @@ public class DataWriter : MonoBehaviour
     private float latestTime;
     private volatile bool writerOn;
     private string fileName;
-    private System.Random rand;
-
-    void Start()
-    {
-        rand = new System.Random();
-    }
 
     public void Init(string subjectName)
     {
@@ -88,14 +80,14 @@ public class DataWriter : MonoBehaviour
             T.ToString() + '\n' ;
     }
 
-    public void StartNewTest(int testNumber, TestCase.Type type)
+    public void StartNewTest(int testNumber, TestCase.TrialType type)
     {
         // Make the file name and directory for this specific trial if it's not there
         fileName = dataPath + "\\Test_#"
             + testNumber;
-        if (type == TestCase.Type.Trial)
+        if (type == TestCase.TrialType.Trial)
             fileName += "\\TRIAL";
-        else if(type == TestCase.Type.Practice)
+        else if(type == TestCase.TrialType.Practice)
             fileName += "\\PRACTICE";
         Directory.CreateDirectory(fileName);
         fileName += "\\" + System.DateTime.Now.ToString("HH-mm-ss") + ".txt";

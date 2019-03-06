@@ -6,12 +6,12 @@ using UnityEngine;
 [System.Serializable]
 public class TestCase : System.Object
 {
-    public enum Type { Practice, Trial, Robot };
+    public enum TrialType { Practice, Trial, Robot };
+    public enum BuildType { Target, InitialVelocity, InitialParameters };
     
     public float launchSpeed; // Meters per second
     public float launchAngle; // Degrees from plane
     public float launchDeviation; // Degrees deviation from player
-    public int timesToPerform; // No of times to perform this trial
     public string floatFormat = "0.##";
 
     internal int testNumber;
@@ -21,7 +21,6 @@ public class TestCase : System.Object
     internal Text testCounterBox;
     internal Text testStatus;
     internal Vector3 initialVelocityVector;
-    internal float timesPerformed = 0;
 
     private TrialsManager manager;
     /// <summary>
@@ -29,7 +28,7 @@ public class TestCase : System.Object
     /// achieving the specified maximum ball height.
     /// </summary>
     /// <param name="target">The target point for the ball to land at</param>
-    public TestCase(Vector3 target, float height, int timesToPerform)
+    public TestCase(Vector3 target, float height)
     {
         Vector3 velocityVector = new Vector3();
         velocityVector.y = Mathf.Sqrt(-2 * (height-1) * Physics.gravity.y);
@@ -42,8 +41,31 @@ public class TestCase : System.Object
         launchSpeed = velocityVector.magnitude;
         launchDeviation = Mathf.Sign(velocityVector.z) * Vector3.Angle(Vector3.right, velocityVector.XZ());
         launchAngle = Vector3.Angle(Vector3.right, velocityVector.XY());
+    }
 
-        this.timesToPerform = timesToPerform;
+    /// <summary>
+    /// Create a test case with the initial velocity.
+    /// </summary>
+    /// <param name="initialVelocityVector">The initial velocity vector of the ball</param>
+    public TestCase(Vector3 initialVelocityVector)
+    {
+        this.initialVelocityVector = initialVelocityVector;
+
+        launchSpeed = initialVelocityVector.magnitude;
+        launchDeviation = Mathf.Sign(initialVelocityVector.z) * Vector3.Angle(Vector3.right, initialVelocityVector.XZ());
+        launchAngle = Vector3.Angle(Vector3.right, initialVelocityVector.XY());
+    }
+
+    /// <summary>
+    /// Create a test case with the specified initial launch speed, deviation and angle.
+    /// </summary>
+    public TestCase(float launchSpeed, float launchDeviation, float launchAngle)
+    {
+        initialVelocityVector = Quaternion.Euler(0,launchDeviation,launchAngle) * Vector3.right * launchSpeed;
+        
+        this.launchSpeed = launchSpeed;
+        this.launchAngle = launchAngle;
+        this.launchDeviation = launchDeviation;
     }
 
     public void Initialise(GameObject gameObject, int testNumber, TrialsManager manager)
@@ -54,9 +76,9 @@ public class TestCase : System.Object
 
         // Link buttons
         loadButton = testCaseObject.transform.Find("LoadButton").GetComponent<Button>();
-        loadButton.onClick.AddListener(LoadButton);
+        loadButton.onClick.AddListener(Load);
         unloadButton = testCaseObject.transform.Find("UnloadButton").GetComponent<Button>();
-        unloadButton.onClick.AddListener(UnloadButton);
+        unloadButton.onClick.AddListener(Unload);
         
         GameObject textCols = testCaseObject.transform.Find("TextCols").gameObject;
         
@@ -73,10 +95,6 @@ public class TestCase : System.Object
                 case "DevCol":
                     child.GetComponent<Text>().text = launchDeviation.ToString(floatFormat) + "°";
                     break;
-                case "TimesCol":
-                    testCounterBox = child.GetComponent<Text>();
-                    testCounterBox.text = timesPerformed + "/" + timesToPerform;
-                    break;
                 case "NumCol":
                     child.GetComponent<Text>().text = "#" + testNumber;
                     break;
@@ -86,7 +104,7 @@ public class TestCase : System.Object
         testStatus = testCaseObject.transform.Find("TestStatus").GetComponent<Text>();
     }
 
-    public void LoadButton()
+    public void Load()
     {
         manager.LoadTest(this);
 
@@ -94,7 +112,7 @@ public class TestCase : System.Object
         testStatus.color = CustomColors.Orange;
     }
 
-    public void UnloadButton()
+    public void Unload()
     {
         manager.UnloadTest();
         
@@ -105,24 +123,12 @@ public class TestCase : System.Object
 
     public void CompleteTest(bool caught)
     {
-        // Add to counter
-        timesPerformed++;
         // Write status
         if (caught)
             testStatus.text = "Catch";
         else
             testStatus.text = "No Catch";
         testStatus.color = CustomColors.Black;
-        // Write counter
-        testCounterBox.text = timesPerformed + "/" + timesToPerform;
-        if (timesPerformed > timesToPerform)
-            testCounterBox.color = CustomColors.Green;
-    }
-
-    public void ResetCounter()
-    {
-        testCounterBox.text = "0/" + timesToPerform;
-        timesPerformed = 0;
     }
 
     public void UnloadTest()

@@ -106,8 +106,8 @@ public class OAC : MonoBehaviour, ICatcher
 
         // Start
         manager.catcher = this;
-        startingTime = Time.time + manager.secondsCountdownBeforeStart;
-        StartCoroutine(manager.StartTrial(TestCase.Type.Robot));
+        startingTime = Time.time + manager.pauseBetweenTrials;
+        StartCoroutine(manager.StartTrial(TestCase.TrialType.Robot));
     }
 
     /// <summary>

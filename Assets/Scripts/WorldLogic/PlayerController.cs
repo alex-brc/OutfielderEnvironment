@@ -7,6 +7,9 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour, ICatcher
 {
+    public enum Controller { WiiBoard, FOVE }
+
+    public Controller controllerType;
     public float maximumSpeed = 7;
     public Vector3 homePosition;
     
@@ -28,23 +31,23 @@ public class PlayerController : MonoBehaviour, ICatcher
         maximumLean.x = maximumLean.z = Mathf.NegativeInfinity;
     }
     
-    public void StartButton()
+    public void IndividualTrialStart()
     {
-        if (!calibrating)
-        {
-            SetZeroPosition();
-            manager.catcher = this;
-            StartCoroutine(manager.StartTrial(TestCase.Type.Trial));
-        }
+        StartTrial(TestCase.TrialType.Trial);
     }
 
-    public void StartPracticeButton()
+    public void IndividualPracticeStart()
+    {
+        StartTrial(TestCase.TrialType.Practice);
+    }
+
+    private void StartTrial(TestCase.TrialType type)
     {
         if (!calibrating)
         {
             SetZeroPosition();
             manager.catcher = this;
-            StartCoroutine(manager.StartTrial(TestCase.Type.Practice));
+            StartCoroutine(manager.StartTrial(type));
         }
     }
 
@@ -52,7 +55,7 @@ public class PlayerController : MonoBehaviour, ICatcher
     {
         if (calibrating)
         {
-            Vector3 currentLean = GetControlInput() - zeroPosition;
+            Vector3 currentLean = GetFOVEInput() - zeroPosition;
             if (currentLean.x < minimumLean.x)
                 minimumLean.x = currentLean.x;
             if (currentLean.z < minimumLean.z)
@@ -62,43 +65,58 @@ public class PlayerController : MonoBehaviour, ICatcher
                 maximumLean.x = currentLean.x;
             if (currentLean.z > maximumLean.z)
                 maximumLean.z = currentLean.z;
-
-            Debug.Log("maxlean: " + maximumLean + "  minLean: " + minimumLean);
         }
     }
 
     public void Move()
-    { 
-        // Raw motion vector
-        motionVector = GetControlInput() - zeroPosition;
-        
-        // Cutoff exceeding values
-        motionVector.x = Mathf.Clamp(motionVector.x, minimumLean.x, maximumLean.x);
-        motionVector.y = 0;
-        motionVector.z = Mathf.Clamp(motionVector.z, minimumLean.z, maximumLean.z);
+    {
+        float modifier = 1;
+        if (controllerType == Controller.FOVE)
+        {
+            // Raw motion vector
+            motionVector = GetFOVEInput() - zeroPosition;
 
-        // Ignore y, start preparing actual velocity vector
-        velocityVector = motionVector;
-        
-        if (motionVector.x < 0) // Leaning back
-            velocityVector.x = motionVector.x / Mathf.Abs(minimumLean.x);
-        else                    // Leaning forward
-            velocityVector.x = motionVector.x / Mathf.Abs(maximumLean.x);
+            // Cutoff exceeding values
+            motionVector.x = Mathf.Clamp(motionVector.x, minimumLean.x, maximumLean.x);
+            motionVector.y = 0;
+            motionVector.z = Mathf.Clamp(motionVector.z, minimumLean.z, maximumLean.z);
 
-        if (motionVector.z < 0) // Leaning left
-            velocityVector.z = motionVector.z / Mathf.Abs(minimumLean.z);
-        else                    // Leaning right
-            velocityVector.z = motionVector.z / Mathf.Abs(maximumLean.z);
-        // Magnitude should be in [0..1] for each of x and z
-        
-        // Correct orientation
-        velocityVector = Quaternion.Euler(0, -90, 0) * velocityVector;
+            // Ignore y, start preparing actual velocity vector
+            velocityVector = motionVector;
 
-        // Put this through a sinusoid for smoother values (currently not needed)
-        // float t = velocityVector.magnitude * Mathf.PI;
-        // t = (1 - Mathf.Cos(t)) / 2;
-        
-        rigidbody.velocity = velocityVector * maximumSpeed;
+            if (motionVector.x < 0) // Leaning back
+                velocityVector.x = motionVector.x / Mathf.Abs(minimumLean.x);
+            else                    // Leaning forward
+                velocityVector.x = motionVector.x / Mathf.Abs(maximumLean.x);
+
+            if (motionVector.z < 0) // Leaning left
+                velocityVector.z = motionVector.z / Mathf.Abs(minimumLean.z);
+            else                    // Leaning right
+                velocityVector.z = motionVector.z / Mathf.Abs(maximumLean.z);
+            // Magnitude should be in [0..1] for each of x and z
+
+            // Correct orientation
+            velocityVector = Quaternion.Euler(0, -90, 0) * velocityVector;
+
+            // Linear map
+            rigidbody.velocity = modifier * velocityVector * maximumSpeed;
+        }
+        else if(controllerType == Controller.WiiBoard)
+        {
+            // This is already filtered by the app
+            velocityVector = GetWiiBoardInput();
+            
+            // Put this through a sinusoid for smoother values (currently not needed)
+            modifier = velocityVector.magnitude * Mathf.PI;
+            modifier = (1 - Mathf.Cos(modifier)) / 2;
+
+            // Apply force
+            // rigidbody.AddForce(modifier * velocityVector * maximumSpeed / 2, ForceMode.Acceleration);
+            
+            // Linear map
+            rigidbody.velocity = modifier * velocityVector * maximumSpeed;
+        }
+
     }
 
     public void SendHome()
@@ -133,12 +151,22 @@ public class PlayerController : MonoBehaviour, ICatcher
 
     internal void SetZeroPosition()
     {
-        zeroPosition = GetControlInput();
-        Debug.Log("set zero at " + zeroPosition);
+        zeroPosition = GetFOVEInput();
     }
 
-    private Vector3 GetControlInput()
+    private Vector3 GetFOVEInput()
     {
-        return fove.transform.position;
+        return fove.transform.localPosition;
+    }
+
+    private Vector3 GetWiiBoardInput()
+    {
+        Vector3 input = new Vector3()
+        {
+            x = -Input.GetAxis("Vertical"),
+            z = Input.GetAxis("Horizontal")
+        };
+        Debug.Log("joystick x: " + input.x + " y: " + input.z);
+        return input;
     }
 }
