@@ -7,14 +7,31 @@ using UnityEngine.UI;
 public class AutoManualToggle : MonoBehaviour
 {
     public InputField configField;
-
+    public BallPresetDropdown presets;
     public Selectable[] settingElements;
-
+    
     private Slider thisSlider;
 
-    private void Start()
+    public void Awake()
     {
         thisSlider = gameObject.GetComponent<Slider>();
+    }
+
+    public void SetValue(bool auto)
+    {
+        if (auto)
+            thisSlider.value = 0;
+        else
+            thisSlider.value = 1;
+        OnValueChanged();
+    }
+
+    public bool GetValue()
+    {
+        if (thisSlider.value == 0)
+            return true;
+        else
+            return false;
     }
 
     public void OnValueChanged()
@@ -30,6 +47,7 @@ public class AutoManualToggle : MonoBehaviour
             configField.interactable = false;
             foreach (Selectable element in settingElements)
                 element.interactable = true;
+            presets.OnValueChanged();
         }
     }
 

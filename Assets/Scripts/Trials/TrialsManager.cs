@@ -20,7 +20,7 @@ public class TrialsManager : MonoBehaviour
     public Vector3 baseballHomePosition;
 
     [Header("Miscellaneous")]
-    public int pauseBetweenTrials;
+    public float pauseBetweenTrials;
 
     [Header("References")]
     public GameObject baseball;
@@ -31,6 +31,8 @@ public class TrialsManager : MonoBehaviour
     public GameObject testsGroup;
     public DataWriter dataWriter;
     public FoveInterface fove;
+    public TestBuilder builder;
+    public ConfigurationManager confManager;
 
     internal TestCase loadedTestCase;
     internal TestCase[] testCases;
@@ -50,6 +52,14 @@ public class TrialsManager : MonoBehaviour
         {
             catcher.Move();
         }
+    }
+
+    public void BuildTests()
+    {
+        confManager.UpdateValues();
+        builder.MakeTargets();
+        testCases = builder.GetTests().ToArray();
+        builder.UpdateUI();
     }
 
     internal IEnumerator StartTrial(TestCase.TrialType type)

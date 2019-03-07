@@ -1,34 +1,80 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class TestBuilder : MonoBehaviour
 {
+    public float fillRatio = 0.8f;
+    public ConfigurationManager confManager;
     public TrialsManager manager;
-    public GameObject testGroupPrefab;
-    public ManualsToggler toggler;
-
-    // Make tests
-    void Intialise()
+    public Transform targetDisplay;
+    public GameObject targetPrefab;
+    
+    private Vector3[] zeroCenteredTargets;
+    
+    public void MakeTargets()
     {
-        Button[] testCaseButtons = new Button[2*manager.testCases.Length];
-        for (int i = 0; i < manager.testCases.Length; i++)
+        int targetsShape = confManager.targetsShape;
+        int numberOfTests = confManager.numberOfTests;
+        float radius = confManager.radius;
+        
+        if (targetsShape == 0 && numberOfTests % 4 != 0)
         {
-            GameObject go = Instantiate(testGroupPrefab);
-            // Grab references to the buttons
-            testCaseButtons[2 * i] = go.transform.Find("LoadButton").GetComponent<Button>();
-            testCaseButtons[2 * i + 1] = go.transform.Find("UnloadButton").GetComponent<Button>();
-            // Set its parent to the tests group
-            go.transform.SetParent(manager.testsGroup.transform, false);
-            // Set its position and fix rotation and scale
-            go.transform.localPosition = manager.firstTestPosition +
-                new Vector3(0, i * manager.verticalOffset, 0);
-            // Initialise it
-            manager.testCases[i].Initialise(go, i + 1, manager);
+            numberOfTests -= numberOfTests % 4;
+            confManager.statusText.text = "Number of tests has to be a multiple of 4 for a square shape. Truncated to " + numberOfTests;
         }
 
-        // Give the buttons to the toggler
-        toggler.testCaseButtons = testCaseButtons;
+        zeroCenteredTargets = new Vector3[numberOfTests];
+        if (targetsShape == 0) // Square
+        {
+            Vector3[] corners =
+            {
+                new Vector3( - radius, 0, - radius),
+                new Vector3( - radius, 0, + radius),
+                new Vector3( + radius, 0, + radius),
+                new Vector3( + radius, 0, - radius)
+            };
+            
+            int k = numberOfTests / 4;
+            Debug.Log("K is " + k);
+            for (int i = 0; i < k; i++)
+            {
+                float l = 1.0f * i / k;
+                for (int j = 0; j < 4; j++)
+                {
+                    Debug.Log("l is " + l);
+                    Vector3 v = Vector3.Lerp(corners[j], corners[(j + 1) % 4], l);
+                    zeroCenteredTargets[i * 4 + j] = v;
+                }
+            }
+        }
+        else // Circle
+        {
+            for (int i = 0; i < numberOfTests; ++i)
+            {
+                float theta = (2 * Mathf.PI / numberOfTests) * i;
+                zeroCenteredTargets[i].x = Mathf.Cos(theta) * radius;
+                zeroCenteredTargets[i].z = Mathf.Sin(theta) * radius;
+            }
+        }
+    }
+
+    public void UpdateUI()
+    {
+        foreach(Vector3 target in zeroCenteredTargets)
+        {
+            Vector3 pos = new Vector3(target.x, target.z, 0);
+            float t = fillRatio * 100 / confManager.radius;
+            GameObject go = Instantiate(targetPrefab, targetDisplay);
+            go.transform.localPosition = pos * t;
+        }
+    }
+
+    public List<TestCase> GetTests()
+    {
+        List<TestCase> tests = new List<TestCase>();
+        foreach(Vector3 target in zeroCenteredTargets)
+            tests.Add(new TestCase(target + manager.catcherStartPosition, confManager.maxBallHeight));
+        return tests;
     }
 }

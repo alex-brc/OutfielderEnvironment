@@ -14,12 +14,14 @@ public class TestCase : System.Object
     public float launchDeviation; // Degrees deviation from player
     public string floatFormat = "0.##";
 
+    internal BuildType buildType;
     internal int testNumber;
     internal GameObject testCaseObject;
     internal Button loadButton;
     internal Button unloadButton;
     internal Text testCounterBox;
     internal Text testStatus;
+    internal Vector3 target;
     internal Vector3 initialVelocityVector;
 
     private TrialsManager manager;
@@ -41,6 +43,10 @@ public class TestCase : System.Object
         launchSpeed = velocityVector.magnitude;
         launchDeviation = Mathf.Sign(velocityVector.z) * Vector3.Angle(Vector3.right, velocityVector.XZ());
         launchAngle = Vector3.Angle(Vector3.right, velocityVector.XY());
+        
+        this.target = target;
+
+        buildType = BuildType.Target;
     }
 
     /// <summary>
@@ -54,6 +60,14 @@ public class TestCase : System.Object
         launchSpeed = initialVelocityVector.magnitude;
         launchDeviation = Mathf.Sign(initialVelocityVector.z) * Vector3.Angle(Vector3.right, initialVelocityVector.XZ());
         launchAngle = Vector3.Angle(Vector3.right, initialVelocityVector.XY());
+
+        // Compute target
+        target = new Vector3();
+        float t = (initialVelocityVector.y + Mathf.Sqrt(initialVelocityVector.y * initialVelocityVector.y + 2 * Physics.gravity.y)) / (-1 * Physics.gravity.y);
+        target.x = t * initialVelocityVector.x;
+        target.z = t * initialVelocityVector.z;
+
+        buildType = BuildType.InitialVelocity;
     }
 
     /// <summary>
@@ -66,6 +80,14 @@ public class TestCase : System.Object
         this.launchSpeed = launchSpeed;
         this.launchAngle = launchAngle;
         this.launchDeviation = launchDeviation;
+
+        // Compute target
+        Vector3 target = new Vector3();
+        float t = (initialVelocityVector.y + Mathf.Sqrt(initialVelocityVector.y * initialVelocityVector.y + 2 * Physics.gravity.y)) / (-1 * Physics.gravity.y);
+        target.x = t * initialVelocityVector.x;
+        target.z = t * initialVelocityVector.z;
+
+        buildType = BuildType.InitialParameters;
     }
 
     public void Initialise(GameObject gameObject, int testNumber, TrialsManager manager)
@@ -136,5 +158,32 @@ public class TestCase : System.Object
         // Change status
         testStatus.text = "Not Loaded";
         testStatus.color = CustomColors.Black;
+    }
+
+    public string ToConfigFormat()
+    {
+        string marker, content;
+        
+        switch (buildType)
+        {
+            case TestCase.BuildType.InitialParameters:
+                marker = ConfigurationManager.PARAMETERS_TEST;
+                content = "" + launchSpeed + "," + launchAngle + "," + launchDeviation;
+                break;
+            case TestCase.BuildType.InitialVelocity:
+                marker = ConfigurationManager.VELOCITY_TEST;
+                content = "" + initialVelocityVector.x + "," + initialVelocityVector.y + "," + initialVelocityVector.z;
+                break;
+            case TestCase.BuildType.Target:
+                marker = ConfigurationManager.TARGET_TEST;
+                content = "" + target.x + "," + target.y + "," + target.z;
+                break;
+            default: // Should never be
+                marker = content = "";
+                Debug.LogError("Test build type undefined");
+                break;
+        }
+
+        return ConfigurationManager.TEST_MARKER + marker + ConfigurationManager.ASSIGN_MARKER + content;
     }
 }

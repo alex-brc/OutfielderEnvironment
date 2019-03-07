@@ -14,7 +14,7 @@ public class ConfigurationManager : MonoBehaviour
     // Test types
     public const string TARGET_TEST = "T", VELOCITY_TEST = "V", PARAMETERS_TEST = "P";
     
-    public string configurationFileName;
+    public string floatFormat = "0.##";
 
     [Header("Default values")]
     public int numberOfTests = 8;
@@ -25,20 +25,38 @@ public class ConfigurationManager : MonoBehaviour
     public bool auto = true;
     public float maxBallHeight = 20;
     public float radius = 8;
-    public int targetsShape = 1;
-    public int ballPreset = 1;
-    public float ballMass = 0.07f;
-    public float ballSize = 0.2f;
-    public float ballFriction = 0.01f;
-    public int pauseBetweenTrials = 3;
+    public int targetsShape = 0;
+    public int ballPreset = 0;
+    public float ballMass = 0f;
+    public float ballSize = 0f;
+    public float ballFriction = 0f;
+    public float pauseBetweenTrials = 3;
+
+    [Header("UI elements")]
+    public Text statusText;
+    public InputField configurationFileName;
+    public AutoManualToggle autoToggle;
+    public BallPresetDropdown ballPresetDropdown;
+    public InputField ballMassField;
+    public InputField ballSizeField;
+    public InputField ballFrictionField;
+    public CustomSlider startingDistanceSlider;
+    public CustomSlider maxSpeedSlider;
+    public InputField numberOfTestsBox;
+    public InputField practiceRunsBox;
+    public InputField trialRunsBox;
+    public InputField maxBallHeightBox;
+    public InputField radiusBox;
+    public Dropdown targetsShapeDropdown;
+    public InputField pauseBetweenBox;
 
     [Header("References")]
     public TrialsManager manager;
     public PlayerController player;
     public Rigidbody ball;
-    public Text statusText;
-    
+
     private List<TestCase> tests;
+    private bool loadedOk;
 
     void Start()
     {
@@ -46,24 +64,23 @@ public class ConfigurationManager : MonoBehaviour
         // Load config file, if any present
         if (!LoadConfig()) {
             statusText.color = CustomColors.Red;
+            loadedOk = false;
         }
         else if (!CheckConfig())
         {
+            statusText.text = "Values outside accepted ranges in config file.";
             statusText.color = CustomColors.Red;
+            loadedOk = false;
         } 
         else
         {
             statusText.text = "Configuration file OK";
             statusText.color = CustomColors.Green;
+            loadedOk = true;
         }
-
-        // Create the tests if needed
-        if (auto)
-            MakeAutoTests();
-
-        // Fill the boxes
-        FillUI();
-
+        
+        SetBallValues(); // based on the ball presets
+        
         // Set the values in respective classes
         manager.testCases = tests.ToArray();
         manager.practiceRuns = practiceRuns;
@@ -71,48 +88,104 @@ public class ConfigurationManager : MonoBehaviour
         manager.pauseBetweenTrials = pauseBetweenTrials;
         manager.catcherStartPosition = new Vector3(startingDistance, 0, 0);
         player.maximumSpeed = maxSpeed;
-        SetBallValues(); // based on the ball presets
+        
+        // Finally fill the boxes
+        FillUI();
+    }
+    
+    public void UpdateValues()
+    {
+        numberOfTests = int.Parse(numberOfTestsBox.text);
+        practiceRuns = int.Parse(practiceRunsBox.text);
+        trialRuns = int.Parse(trialRunsBox.text);
+        maxSpeed = maxSpeedSlider.GetValue() ;
+        startingDistance = startingDistanceSlider.GetValue();
+        auto = autoToggle.GetValue() ;
+        maxBallHeight = float.Parse(maxBallHeightBox.text);
+        radius = float.Parse(radiusBox.text);
+        targetsShape = targetsShapeDropdown.value;
+        ballPreset = ballPresetDropdown.GetValue();
+        if (ballPreset == 0)
+        {
+            ballMass = float.Parse(ballMassField.text);
+            ballSize = float.Parse(ballMassField.text);
+            ballFriction = float.Parse(ballFrictionField.text);
+        }
+        SetBallValues();
+        pauseBetweenTrials = float.Parse(pauseBetweenBox.text);
     }
 
     private void FillUI()
     {
+        if (auto)
+            autoToggle.SetValue(auto);
 
+        // Fill regular boxes
+        startingDistanceSlider.SetValue(startingDistance);
+        maxSpeedSlider.SetValue(maxSpeed);
+        numberOfTestsBox.text = numberOfTests.ToString();
+        practiceRunsBox.text = practiceRuns.ToString();
+        trialRunsBox.text = trialRuns.ToString();
+        maxBallHeightBox.text = maxBallHeight.ToString(floatFormat);
+        radiusBox.text = radius.ToString(floatFormat);
+        pauseBetweenBox.text = pauseBetweenTrials.ToString(floatFormat);
+
+        // Do ball boxes
+        ballPresetDropdown.SetValue(ballPreset);
+        if (ballPreset == 0)
+        {
+            ballPresetDropdown.FillBoxes(ballSize, ballMass, ballFriction, floatFormat);
+        }
     }
 
     private void SetBallValues()
     {
-        // For now just baseball
-        if (ballPreset == CUSTOMBALL) // Custom
-        {
-            ball.mass = ballMass;
-            ball.drag = ballFriction;
-            ball.transform.localScale = new Vector3(ballSize, ballSize, ballSize);
+        // Set values for ballMass, ballFriction, ballSize
+         switch(ballPreset)
+         {
+            case CUSTOMBALL:
+                // Values already set
+                break;
+            case BASEBALL:
+                ballMass = BallPreset.Baseball.mass;
+                ballSize = BallPreset.Baseball.size;
+                ballFriction = BallPreset.Baseball.friction;
+                break;
+            case TENNISBALL:
+                ballMass = BallPreset.Tennisball.mass;
+                ballSize = BallPreset.Tennisball.size;
+                ballFriction = BallPreset.Tennisball.friction;
+                break;
+            case SHUTTLECOCK:
+                ballMass = BallPreset.Shuttlecock.mass;
+                ballSize = BallPreset.Shuttlecock.size;
+                ballFriction = BallPreset.Shuttlecock.friction;
+                break;
+            case FOOTBALL:
+                ballMass = BallPreset.Football.mass;
+                ballSize = BallPreset.Football.size;
+                ballFriction = BallPreset.Football.friction;
+                break;
+            case BASKETBALL:
+                ballMass = BallPreset.Basketball.mass;
+                ballSize = BallPreset.Basketball.size;
+                ballFriction = BallPreset.Basketball.friction;
+                break;
+            default:
+                statusText.text = "Something went wrong, unidentified ball preset.";
+                break;
         }
-        else if(ballPreset == BASEBALL)
-        {
-            ballMass = 0.14f;
-            ballFriction = 0.01f;
-            ballSize = 0.1f;
 
-            ball.mass = ballMass;
-            ball.drag = ballFriction;
-            ball.transform.localScale = new Vector3(ballSize, ballSize, ballSize);
-        }
-        else
-        {
-            throw new NotImplementedException();
-        }
+        // Set ball
+        ball.mass = ballMass;
+        ball.drag = ballFriction;
+        ball.transform.localScale = new Vector3(ballSize, ballSize, ballSize);
     }
 
     private void OnApplicationQuit()
     {
         // Save config file
         SaveConfig();
-    }
-
-    private void MakeAutoTests()
-    {
-        throw new NotImplementedException();
     }
     
     private bool CheckConfig()
@@ -131,7 +204,7 @@ public class ConfigurationManager : MonoBehaviour
         if (auto &&
             (maxBallHeight <= 0 || maxBallHeight > 100
           || radius <= 0 || radius >= 100
-          || (targetsShape != 1 && targetsShape != 2)))
+          || (targetsShape != 0 && targetsShape != 1)))
             return false;
         if (ballPreset > 6 || ballPreset < 1)
             return false;
@@ -147,7 +220,7 @@ public class ConfigurationManager : MonoBehaviour
         List<string> lines = new List<string>();
         try
         {
-            using (StreamReader reader = new StreamReader(configurationFileName))
+            using (StreamReader reader = new StreamReader(configurationFileName.text))
             {
                 string line = reader.ReadLine();
                 while (line != null)
@@ -177,9 +250,7 @@ public class ConfigurationManager : MonoBehaviour
             Debug.LogError("Failed to load config file: " + e.ToString());
             return false;
         }
-
-        Debug.Log(lines.Count);
-
+        
         // Keep track of line numbers
         int lineNo = 1;
         // Process the lines
@@ -196,7 +267,6 @@ public class ConfigurationManager : MonoBehaviour
 
                 // varname should be in [0] (+$) val should be in [1]  
                 string[] tokens = line.Split('=');
-                Debug.Log(tokens[0]);
                 switch (tokens[0])
                 {
                     case (VARIABLE_MARKER + "number_of_tests"):
@@ -250,7 +320,7 @@ public class ConfigurationManager : MonoBehaviour
                         }
                         break;
                     case (VARIABLE_MARKER + "pause_between_trials"):
-                        if (!int.TryParse(tokens[1], out pauseBetweenTrials))
+                        if (!float.TryParse(tokens[1], out pauseBetweenTrials))
                         {
                             statusText.text = "Illegal value \"" + tokens[1] + "\" for pause_between_trials (line:" + lineNo + ")";
                             return false;
@@ -349,7 +419,7 @@ public class ConfigurationManager : MonoBehaviour
         }
 
         // Make sure numbers add up
-        if (tests.Count != numberOfTests)
+        if (!auto && tests.Count != numberOfTests)
         {
             statusText.text = "Number of tests (" + numberOfTests + ") doesn't match the length of the test list (" + tests.Count + ").";
             return false;
@@ -360,6 +430,52 @@ public class ConfigurationManager : MonoBehaviour
     
     private bool SaveConfig()
     {
+        UpdateValues();
+        if (!loadedOk || !auto)
+            return false;
+        try
+        {
+            using (StreamWriter writer = new StreamWriter(configurationFileName.text))
+            {
+                // Write variables
+                writer.WriteLine(VARIABLE_MARKER + "starting_distance" + ASSIGN_MARKER + startingDistance.ToString());
+                writer.WriteLine(VARIABLE_MARKER + "max_speed" + ASSIGN_MARKER + maxSpeed.ToString());
+                writer.WriteLine(VARIABLE_MARKER + "number_of_tests" + ASSIGN_MARKER + numberOfTests.ToString());
+                writer.WriteLine(VARIABLE_MARKER + "practice_runs" + ASSIGN_MARKER + practiceRuns.ToString());
+                writer.WriteLine(VARIABLE_MARKER + "trial_runs" + ASSIGN_MARKER + trialRuns.ToString());
+                writer.WriteLine(VARIABLE_MARKER + "pause_between_trials" + ASSIGN_MARKER + pauseBetweenTrials.ToString());
+
+                if (ballPreset != 0)
+                {
+                    writer.WriteLine(VARIABLE_MARKER + "ball_preset" + ASSIGN_MARKER + ballPreset.ToString());
+                    writer.WriteLine(VARIABLE_MARKER + "ball_size" + ASSIGN_MARKER + ballSize.ToString());
+                    writer.WriteLine(VARIABLE_MARKER + "ball_mass" + ASSIGN_MARKER + ballMass.ToString());
+                    writer.WriteLine(VARIABLE_MARKER + "ball_friction" + ASSIGN_MARKER + ballFriction.ToString());
+                }
+
+                if (auto)
+                {
+                    writer.WriteLine(VARIABLE_MARKER + "auto" + ASSIGN_MARKER + auto.ToString());
+                    writer.WriteLine(VARIABLE_MARKER + "max_ball_height" + ASSIGN_MARKER + maxBallHeight.ToString());
+                    writer.WriteLine(VARIABLE_MARKER + "radius" + ASSIGN_MARKER + radius.ToString());
+                    writer.WriteLine(VARIABLE_MARKER + "targets_shape" + ASSIGN_MARKER + targetsShape.ToString());
+                }
+                else
+                {
+                    // Write list of tests
+                    foreach(TestCase test in tests)
+                    {
+                        writer.WriteLine(test.ToConfigFormat());
+                    }
+                }
+            }
+        }
+        catch(IOException e)
+        {
+            Debug.LogError("Couldn't save config. " + e.ToString());
+            return false;
+        }
+
         return true;
     }
 
