@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[DisallowMultipleComponent]
 [RequireComponent(typeof(TrialsManager))]
 public class AutoTrialRunner : MonoBehaviour
 {
@@ -37,7 +38,7 @@ public class AutoTrialRunner : MonoBehaviour
                 continue;
             }
             // Load the test with number index[currentIndex]
-            manager.testCases[testIndexes[currentIndex]].Load();
+            manager.LoadTest(manager.testCases[testIndexes[currentIndex]]);
 
             // Set null position for controller
             player.SetZeroPosition();

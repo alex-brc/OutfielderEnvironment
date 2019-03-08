@@ -1,35 +1,77 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using UnityEngine;
 
-// Collects data from the object it's attached to.
-public class DataCollector : MonoBehaviour
+/// <summary>
+/// Collects data from the object it's attached to during a trial/practice.
+/// </summary>
+public class DataCollector : MonoBehaviour, Collector
 {
-    public enum Type { GameObject, Fove };
-
-    public Type type;
+    public string fileName;
 
     [Header("References")]
-    public DataWriter writer;
-    public FoveInterface fove;
-    
-    // Send data to the writer every physics update.
-    void Update()
+    public DataManager dataManager;
+
+    private StringBuilder stringBuilder;
+    private Coroutine writerCoroutine;
+    private float startingFrame, startingTime;
+
+    private void Start()
     {
-        // If the writer is off don't write anything. This is only a thing inside the editor for testing purposes.
-        if (!writer.isActive())
+        // Give this to the manager
+        dataManager.collectors.Add(this);
+    }
+
+    public void StartCollecting()
+    {
+        // Make the file
+        fileName = dataManager.testPath + "\\" + fileName;
+        // Write the columns
+        string output =
+            "Time,Frame," +
+            "Position_X,Position_Y,Position_Z," +
+            "Rotation_X,Rotation_Y,Rotation_Z," +
+            "Velocity_X,Velocity_Y,Velocity_Z\r\n";
+        File.WriteAllText(fileName, output);
+
+        startingFrame = Time.frameCount;
+        startingTime = Time.time;
+        
+        stringBuilder = new StringBuilder();
+        writerCoroutine = StartCoroutine(DataManager.WriterRoutine(dataManager, fileName, stringBuilder));
+    }
+
+    public void StopCollecting()
+    {
+        // Dump the stringbuilder
+        File.AppendAllText(fileName, stringBuilder.ToString());
+        stringBuilder = new StringBuilder();
+    }
+
+    private string Record()
+    {
+        object[] vals = {
+            (Time.time - startingTime),
+            (Time.frameCount - startingFrame),
+            gameObject.transform.position.ToCSVFormat(),
+            gameObject.transform.rotation.eulerAngles.ToCSVFormat(),
+            gameObject.GetComponent<Rigidbody>().velocity.ToCSVFormat()};
+
+        // Make those values into a comma separated line
+        return DataManager.ToCSVLine(vals);
+    }
+
+    // Write every physics update
+    void FixedUpdate()
+    {
+        // If the writer is off don't write anything. 
+        // This is only a thing inside the editor for testing purposes.
+        if (!dataManager.isActive())
             return;
         
-        switch (type)
-        {
-            case Type.GameObject:
-                writer.Record(gameObject, Time.time);
-                break;
-            case Type.Fove:
-                writer.RecordFOVE(fove, Time.time);
-                break;
-
-            default: goto case Type.GameObject;
-        }
+        if (dataManager.Running())
+            stringBuilder.AppendLine(Record());
     }
 }

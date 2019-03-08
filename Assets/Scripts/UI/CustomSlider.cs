@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+[DisallowMultipleComponent]
 [RequireComponent(typeof(Slider))]
 public class CustomSlider : MonoBehaviour
 {

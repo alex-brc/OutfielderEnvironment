@@ -3,33 +3,44 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+[DisallowMultipleComponent]
 public class SubjectOperations : MonoBehaviour
 {
     [Header("References")]
-    public InputField subjectInputField;
+    public InputField nameField;
+    public InputField ageField;
+    public InputField otherField;
+    public Slider handednessSlider;
+    public Slider genderSlider;
     public Button setSubjectButton;
     public Button clearSubjectButton;
+    public Button buildTestButton;
     public Button controlViewButton;
     public Text statusText;
-    public TrialsManager trialsManager;
-    public DataWriter dataWriter;
+    public TrialsManager manager;
+    public DataManager dataWriter;
 
     bool hasSubject;
     internal string subjectName;
+    internal string age;
+    internal string otherInfo;
+    internal string gender;     // false = male,  true = female
+    internal string handedness; // false = lefty, true = righty 
 
     void Start()
     {
         hasSubject = false;
         clearSubjectButton.interactable = false;
         controlViewButton.interactable = false;
+        buildTestButton.interactable = false;
     }
 
     public void SetSubject()
     {
-        if (subjectInputField.text.Equals(""))
+        if (nameField.text.Equals(""))
         {
             // Then field is empty, must have something
-            statusText.text = "Fields empty";
+            statusText.text = "Name field cannot be empty.";
             statusText.color = CustomColors.Red;
             return;
         }
@@ -38,10 +49,18 @@ public class SubjectOperations : MonoBehaviour
         // (or write to the folder of an older 
         // one if they have the same name)
         hasSubject = true;
-        // Set the subject name
-        subjectName = subjectInputField.text;
+        // Set the subject values
+        subjectName = nameField.text;
+        age = ageField.text; // textbox only takes integer inputs
+        gender = (genderSlider.value == 0) ? "Male" : "Female";
+        handedness = (handednessSlider.value == 0) ? "Left" : "Right";
+        otherInfo = otherField.text;
+
         // Disable this box and the button to set, enable the clear and control view
-        subjectInputField.interactable = false;
+        nameField.interactable = false;
+        ageField.interactable = false;
+        genderSlider.interactable = false;
+        handednessSlider.interactable = false;
         setSubjectButton.interactable = false;
         clearSubjectButton.interactable = true;
         controlViewButton.interactable = true;
@@ -49,7 +68,9 @@ public class SubjectOperations : MonoBehaviour
         statusText.text = "Subject set";
         statusText.color = CustomColors.Green;
         // Initialise data writer
-        dataWriter.Init(subjectName);
+        dataWriter.Init(subjectName,age,gender,handedness,otherInfo);
+        // Unlock build tests button
+        buildTestButton.interactable = true;
     }
 
     public void ClearSubject()
@@ -57,15 +78,24 @@ public class SubjectOperations : MonoBehaviour
         // Reset buttons and boxes
         hasSubject = false;
         subjectName = "";
-        subjectInputField.interactable = true;
+        otherField.text = "";
+        genderSlider.value = 0;
+        handednessSlider.value = 1;
+        
+        nameField.interactable = true;
+        ageField.interactable = true;
+        genderSlider.interactable = true;
+        handednessSlider.interactable = true;
         setSubjectButton.interactable = true;
         clearSubjectButton.interactable = false;
         controlViewButton.interactable = false;
         statusText.text = "Subject cleared";
         statusText.color = CustomColors.Black;
         // Also reset the trials
-        trialsManager.ResetTests();
+        manager.ResetTests();
         // Also reset the dataWriter
-        dataWriter.Reset();
+        dataWriter.ResetWriter();
+        // And block build test button
+        buildTestButton.interactable = false;
     }
 }

@@ -8,30 +8,28 @@ public class TestCase : System.Object
 {
     public enum TrialType { Practice, Trial, Robot };
     public enum BuildType { Target, InitialVelocity, InitialParameters };
-    
-    public float launchSpeed; // Meters per second
-    public float launchAngle; // Degrees from plane
-    public float launchDeviation; // Degrees deviation from player
-    public string floatFormat = "0.##";
 
     internal BuildType buildType;
     internal int testNumber;
-    internal GameObject testCaseObject;
-    internal Button loadButton;
-    internal Button unloadButton;
-    internal Text testCounterBox;
-    internal Text testStatus;
     internal Vector3 target;
     internal Vector3 initialVelocityVector;
+    internal float launchSpeed; // Meters per second
+    internal float launchAngle; // Degrees from plane
+    internal float launchDeviation; // Degrees deviation from player
 
-    private TrialsManager manager;
+    private string floatFormat = "0.##";
+    internal GameObject testCaseObject;
+    internal Text testCounterBox;
+
     /// <summary>
     /// Create a test case whose ball will land at the specified target,
     /// achieving the specified maximum ball height.
     /// </summary>
     /// <param name="target">The target point for the ball to land at</param>
-    public TestCase(Vector3 target, float height)
+    public TestCase(Vector3 target, float height, int testNumber)
     {
+        this.testNumber = testNumber;
+
         Vector3 velocityVector = new Vector3();
         velocityVector.y = Mathf.Sqrt(-2 * (height-1) * Physics.gravity.y);
         float t =  (velocityVector.y + Mathf.Sqrt(velocityVector.y * velocityVector.y + 2 * Physics.gravity.y))/ (-1 * Physics.gravity.y);
@@ -53,8 +51,10 @@ public class TestCase : System.Object
     /// Create a test case with the initial velocity.
     /// </summary>
     /// <param name="initialVelocityVector">The initial velocity vector of the ball</param>
-    public TestCase(Vector3 initialVelocityVector)
+    public TestCase(Vector3 initialVelocityVector, int testNumber)
     {
+        this.testNumber = testNumber;
+
         this.initialVelocityVector = initialVelocityVector;
 
         launchSpeed = initialVelocityVector.magnitude;
@@ -73,8 +73,10 @@ public class TestCase : System.Object
     /// <summary>
     /// Create a test case with the specified initial launch speed, deviation and angle.
     /// </summary>
-    public TestCase(float launchSpeed, float launchDeviation, float launchAngle)
+    public TestCase(float launchSpeed, float launchDeviation, float launchAngle, int testNumber)
     {
+        this.testNumber = testNumber;
+
         initialVelocityVector = Quaternion.Euler(0,launchDeviation,launchAngle) * Vector3.right * launchSpeed;
         
         this.launchSpeed = launchSpeed;
@@ -90,74 +92,37 @@ public class TestCase : System.Object
         buildType = BuildType.InitialParameters;
     }
 
-    public void Initialise(GameObject gameObject, int testNumber, TrialsManager manager)
+    public void Initialise(GameObject gameObject)
     {
         testCaseObject = gameObject;
-        this.manager = manager;
-        this.testNumber = testNumber;
 
-        // Link buttons
-        loadButton = testCaseObject.transform.Find("LoadButton").GetComponent<Button>();
-        loadButton.onClick.AddListener(Load);
-        unloadButton = testCaseObject.transform.Find("UnloadButton").GetComponent<Button>();
-        unloadButton.onClick.AddListener(Unload);
-        
-        GameObject textCols = testCaseObject.transform.Find("TextCols").gameObject;
-        
-        foreach (Transform child in textCols.transform)
+        Transform textColumns = gameObject.transform.Find("TextCols");
+
+        foreach (Transform child in gameObject.transform)
         {
             switch (child.name)
             {
-                case "SpeedCol":
+                case "Num":
+                    child.GetComponent<Text>().text = "#" + testNumber;
+                    break;
+                case "Speed":
                     child.GetComponent<Text>().text = launchSpeed.ToString(floatFormat) + "m/s";
                     break;
-                case "AngleCol":
+                case "Angle":
                     child.GetComponent<Text>().text = launchAngle.ToString(floatFormat) + "°";
                     break;
-                case "DevCol":
+                case "Deviation":
                     child.GetComponent<Text>().text = launchDeviation.ToString(floatFormat) + "°";
-                    break;
-                case "NumCol":
-                    child.GetComponent<Text>().text = "#" + testNumber;
                     break;
             }
         }
-        // Get test status box
-        testStatus = testCaseObject.transform.Find("TestStatus").GetComponent<Text>();
     }
 
-    public void Load()
+    public string ToCSVLine()
     {
-        manager.LoadTest(this);
-
-        testStatus.text = "Loaded";
-        testStatus.color = CustomColors.Orange;
-    }
-
-    public void Unload()
-    {
-        manager.UnloadTest();
-        
-        // Change status
-        testStatus.text = "Not Loaded";
-        testStatus.color = CustomColors.Black;
-    }
-
-    public void CompleteTest(bool caught)
-    {
-        // Write status
-        if (caught)
-            testStatus.text = "Catch";
-        else
-            testStatus.text = "No Catch";
-        testStatus.color = CustomColors.Black;
-    }
-
-    public void UnloadTest()
-    {
-        // Change status
-        testStatus.text = "Not Loaded";
-        testStatus.color = CustomColors.Black;
+        object[] vals = { testNumber, launchSpeed, launchAngle, launchDeviation, target.x, target.z,
+            initialVelocityVector.x, initialVelocityVector.y, initialVelocityVector.z};
+        return DataManager.ToCSVLine(vals);
     }
 
     public string ToConfigFormat()

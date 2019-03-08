@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[DisallowMultipleComponent]
 public class TrialsManager : MonoBehaviour
 {
     public enum TrialStatus { Ready, CountingDown, TrialInProgress }
@@ -29,7 +30,7 @@ public class TrialsManager : MonoBehaviour
     public GameObject UI;
     public GameObject overlay;
     public GameObject testsGroup;
-    public DataWriter dataWriter;
+    public DataManager dataWriter;
     public FoveInterface fove;
     public TestBuilder builder;
     public ConfigurationManager confManager;
@@ -54,14 +55,6 @@ public class TrialsManager : MonoBehaviour
         }
     }
 
-    public void BuildTests()
-    {
-        confManager.UpdateValues();
-        builder.MakeTargets();
-        testCases = builder.GetTests().ToArray();
-        builder.UpdateUI();
-    }
-
     internal IEnumerator StartTrial(TestCase.TrialType type)
     {
         if (loadedTestCase == null)
@@ -76,15 +69,6 @@ public class TrialsManager : MonoBehaviour
         // Bring catcher to field
         catcher.GetRigidbody().position = catcherStartPosition;
         catcher.GetRigidbody().transform.eulerAngles = new Vector3(0, -90, 0);
-        
-        // Update text boxes
-        if(type == TestCase.TrialType.Trial)
-            loadedTestCase.testStatus.text = "In Progress";
-        else if (type == TestCase.TrialType.Practice)
-            loadedTestCase.testStatus.text = "Practice in Progress";
-        else if (type == TestCase.TrialType.Robot)
-            loadedTestCase.testStatus.text = "Robot trial in Progress";
-        loadedTestCase.testStatus.color = CustomColors.Red;
         
         // Update counter color
         infoBox.color = CustomColors.Black;
@@ -102,8 +86,6 @@ public class TrialsManager : MonoBehaviour
             infoBox.text = "Trial running";
         else if (type == TestCase.TrialType.Practice)
             infoBox.text = "Practice trial running";
-        else if (type == TestCase.TrialType.Robot)
-            loadedTestCase.testStatus.text = "Robot trial runnning";
 
         // Update status
         trialStatus = TrialStatus.TrialInProgress;
@@ -123,7 +105,6 @@ public class TrialsManager : MonoBehaviour
 
     internal void CompleteTrial(bool caught)
     {
-        loadedTestCase.CompleteTest(caught);
         // Update infobox
         infoBox.text = "Trial completed";
         infoBox.color = CustomColors.Black;
@@ -147,7 +128,6 @@ public class TrialsManager : MonoBehaviour
         if(loadedTestCase != null)
         {
             // Then some other test was previously loaded
-            loadedTestCase.UnloadTest();
             UnloadTest();
         }
         this.loadedTestCase = testCase;
@@ -160,14 +140,6 @@ public class TrialsManager : MonoBehaviour
 
     public void ResetTests()
     {
-        // Go through all the test cases and call reset on them
-        foreach (Transform child in testsGroup.transform)
-        {
-            if (child.gameObject.name.Contains("TestGroup"))
-            {
-                // It's a test case. Reset it
-                child.GetComponent<TestCase>().UnloadTest();
-            }
-        }
+        testCases = null;
     }
 }

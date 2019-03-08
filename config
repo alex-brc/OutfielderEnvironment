@@ -1,6 +1,6 @@
 $starting_distance=30
 $max_speed=5
-$number_of_tests=8
+$number_of_tests=11
 $practice_runs=10
 $trial_runs=30
 $pause_between_trials=2.1

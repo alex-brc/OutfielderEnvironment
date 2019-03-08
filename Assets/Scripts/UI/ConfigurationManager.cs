@@ -5,6 +5,7 @@ using System.IO;
 using UnityEngine.UI;
 using System;
 
+[DisallowMultipleComponent]
 public class ConfigurationManager : MonoBehaviour
 {
     // Ball presets
@@ -52,10 +53,13 @@ public class ConfigurationManager : MonoBehaviour
 
     [Header("References")]
     public TrialsManager manager;
+    public TestBuilder builder;
+    public DataManager dataManager;
     public PlayerController player;
     public Rigidbody ball;
 
-    private List<TestCase> tests;
+    internal List<TestCase> tests;
+
     private bool loadedOk;
 
     void Start()
@@ -68,7 +72,6 @@ public class ConfigurationManager : MonoBehaviour
         }
         else if (!CheckConfig())
         {
-            statusText.text = "Values outside accepted ranges in config file.";
             statusText.color = CustomColors.Red;
             loadedOk = false;
         } 
@@ -82,7 +85,6 @@ public class ConfigurationManager : MonoBehaviour
         SetBallValues(); // based on the ball presets
         
         // Set the values in respective classes
-        manager.testCases = tests.ToArray();
         manager.practiceRuns = practiceRuns;
         manager.trialRuns = trialRuns;
         manager.pauseBetweenTrials = pauseBetweenTrials;
@@ -92,7 +94,28 @@ public class ConfigurationManager : MonoBehaviour
         // Finally fill the boxes
         FillUI();
     }
-    
+
+    public void ResetTests()
+    {
+        tests = null;
+        manager.testCases = null;
+        builder.ClearUI();
+    }
+
+    public void BuildTests()
+    {
+        UpdateValues();
+        if (auto)
+        {
+            builder.MakeTargets();
+            tests = builder.GetTests();
+        }
+
+        manager.testCases = tests.ToArray();
+        builder.UpdateUI();
+        dataManager.WriteTestsFile(manager.testCases);
+    }
+
     public void UpdateValues()
     {
         numberOfTests = int.Parse(numberOfTestsBox.text);
@@ -200,16 +223,33 @@ public class ConfigurationManager : MonoBehaviour
         || ballMass <= 0
         || ballFriction <= 0
         || ballFriction >= 1)
+        {
+            statusText.text = "Values outside accepted ranges in config file.";
             return false;
+        }
         if (auto &&
             (maxBallHeight <= 0 || maxBallHeight > 100
           || radius <= 0 || radius >= 100
           || (targetsShape != 0 && targetsShape != 1)))
+        {
+            statusText.text = "Auto parameters outside accepted ranges in config file.";
             return false;
+        }
         if (ballPreset > 6 || ballPreset < 1)
+        {
+            statusText.text = "Ball preset outside accepted range in config file.";
             return false;
+        }
         if (!auto && numberOfTests != tests.Count)
+        {
+            statusText.text = "Number of tests (" + numberOfTests + ") doesn't match the length of the test list (" + tests.Count + ") in config file.";
             return false;
+        }
+        if (auto && tests.Count > 0)
+        {
+            statusText.text = "Auto mode but found tests in config file.";
+            return false;
+        }
         // Everything ok
         return true;
     }
@@ -383,7 +423,7 @@ public class ConfigurationManager : MonoBehaviour
                 {
                     case (TEST_MARKER + TARGET_TEST):
                         if (TryMakeTest(tokens[1], out temp))
-                            tests.Add(new TestCase(temp, maxBallHeight));
+                            tests.Add(new TestCase(temp, maxBallHeight, tests.Count));
                         else
                         {
                             statusText.text = "Illegal values \"" + tokens[1] + "\" for a target test. (line:" + lineNo + ")";
@@ -392,7 +432,7 @@ public class ConfigurationManager : MonoBehaviour
                         break;
                     case (TEST_MARKER + VELOCITY_TEST):
                         if (TryMakeTest(tokens[1], out temp))
-                            tests.Add(new TestCase(temp));
+                            tests.Add(new TestCase(temp, tests.Count));
                         else
                         {
                             statusText.text = "Illegal values \"" + tokens[1] + "\" for an initial velocity test. (line:" + lineNo + ")";
@@ -401,7 +441,7 @@ public class ConfigurationManager : MonoBehaviour
                         break;
                     case (TEST_MARKER + PARAMETERS_TEST):
                         if (TryMakeTest(tokens[1], out temp))
-                            tests.Add(new TestCase(temp.x,temp.y,temp.z));
+                            tests.Add(new TestCase(temp.x,temp.y,temp.z, tests.Count));
                         else
                         {
                             statusText.text = "Illegal values \"" + tokens[1] + "\" for a parameters test. (line:" + lineNo + ")";
@@ -417,14 +457,7 @@ public class ConfigurationManager : MonoBehaviour
             // Increase line number
             lineNo++;
         }
-
-        // Make sure numbers add up
-        if (!auto && tests.Count != numberOfTests)
-        {
-            statusText.text = "Number of tests (" + numberOfTests + ") doesn't match the length of the test list (" + tests.Count + ").";
-            return false;
-        }
-
+        
         return true;
     }
     

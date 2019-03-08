@@ -8,14 +8,18 @@ using UnityEngine;
 /// </summary>
 public static class Vector3Extensions
 {
-    public static string ToRecordFormat(this Vector3 vector)
+    /// <summary>
+    /// Returns a string suitable for inserting in a CSV line.
+    /// This outputs just the x,y,z coordinates separated by commas.
+    /// </summary>
+    public static string ToCSVFormat(this Vector3 vector)
     {
-        return "" + vector.x + DataTags.SecondarySeparator + vector.y + DataTags.SecondarySeparator + vector.z;
+        return "" + vector.x + "," + vector.y + "," + vector.z;
     }
 
-    public static string ToRecordFormat(this SFVR_Vec3 vector)
+    public static string ToCSVFormat(this SFVR_Vec3 vector)
     {
-        return "" + vector.x + DataTags.SecondarySeparator + vector.y + DataTags.SecondarySeparator + vector.z;
+        return "" + vector.x + "," + vector.y + "," + vector.z;
     }
 
     /// <summary>
