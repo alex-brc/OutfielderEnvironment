@@ -27,7 +27,7 @@ public class ConfigurationManager : MonoBehaviour
     public float maxBallHeight = 20;
     public float radius = 8;
     public int targetsShape = 0;
-    public int ballPreset = 0;
+    public int ballPreset = 1;
     public float ballMass = 0f;
     public float ballSize = 0f;
     public float ballFriction = 0f;
@@ -36,6 +36,9 @@ public class ConfigurationManager : MonoBehaviour
     [Header("UI elements")]
     public Text statusText;
     public InputField configurationFileName;
+    public Button loadButton;
+    public Button buildButton;
+    public Button controlViewButton;
     public AutoManualToggle autoToggle;
     public BallPresetDropdown ballPresetDropdown;
     public InputField ballMassField;
@@ -62,10 +65,18 @@ public class ConfigurationManager : MonoBehaviour
 
     private bool loadedOk;
 
-    void Start()
+    private void Start()
     {
         tests = new List<TestCase>();
+        loadButton.interactable = false;
+        buildButton.interactable = false;
+        FillUI();
+    }
+
+    public void LoadButton()
+    {
         // Load config file, if any present
+        tests = new List<TestCase>();
         if (!LoadConfig()) {
             statusText.color = CustomColors.Red;
             loadedOk = false;
@@ -77,19 +88,22 @@ public class ConfigurationManager : MonoBehaviour
         } 
         else
         {
-            statusText.text = "Configuration file OK";
-            statusText.color = CustomColors.Green;
+            statusText.text = "Configuration file loaded succesfully.";
+            statusText.color = CustomColors.Black;
             loadedOk = true;
         }
-        
+
+        if (!loadedOk)
+        {
+            return;
+        }
+
+        // Make build buttons available
+        buildButton.interactable = true;
+
         SetBallValues(); // based on the ball presets
-        
-        // Set the values in respective classes
-        manager.practiceRuns = practiceRuns;
-        manager.trialRuns = trialRuns;
-        manager.pauseBetweenTrials = pauseBetweenTrials;
-        manager.catcherStartPosition = new Vector3(startingDistance, 0, 0);
-        player.maximumSpeed = maxSpeed;
+
+        UpdateValuesExtern();
         
         // Finally fill the boxes
         FillUI();
@@ -97,14 +111,17 @@ public class ConfigurationManager : MonoBehaviour
 
     public void ResetTests()
     {
-        tests = null;
+        tests = new List<TestCase>();
         manager.testCases = null;
         builder.ClearUI();
+        controlViewButton.interactable = false;
     }
 
     public void BuildTests()
     {
         UpdateValues();
+        UpdateValuesExtern();
+
         if (auto)
         {
             builder.MakeTargets();
@@ -114,6 +131,7 @@ public class ConfigurationManager : MonoBehaviour
         manager.testCases = tests.ToArray();
         builder.UpdateUI();
         dataManager.WriteTestsFile(manager.testCases);
+        controlViewButton.interactable = true;
     }
 
     public void UpdateValues()
@@ -138,11 +156,22 @@ public class ConfigurationManager : MonoBehaviour
         pauseBetweenTrials = float.Parse(pauseBetweenBox.text);
     }
 
-    private void FillUI()
+    public void UpdateValuesExtern()
     {
-        if (auto)
-            autoToggle.SetValue(auto);
+        manager.practiceRuns = practiceRuns;
+        manager.trialRuns = trialRuns;
+        manager.pauseBetweenTrials = pauseBetweenTrials;
+        manager.catcherStartPosition = new Vector3(startingDistance, 0, 0);
+        player.maximumSpeed = maxSpeed;
+        
+        // Set ball
+        ball.mass = ballMass;
+        ball.drag = ballFriction;
+        ball.transform.localScale = new Vector3(ballSize, ballSize, ballSize);
+    }
 
+    internal void FillUI()
+    {
         // Fill regular boxes
         startingDistanceSlider.SetValue(startingDistance);
         maxSpeedSlider.SetValue(maxSpeed);
@@ -198,11 +227,6 @@ public class ConfigurationManager : MonoBehaviour
                 statusText.text = "Something went wrong, unidentified ball preset.";
                 break;
         }
-
-        // Set ball
-        ball.mass = ballMass;
-        ball.drag = ballFriction;
-        ball.transform.localScale = new Vector3(ballSize, ballSize, ballSize);
     }
 
     private void OnApplicationQuit()
@@ -285,9 +309,14 @@ public class ConfigurationManager : MonoBehaviour
                 }
             }
         }
+        catch(FileNotFoundException e)
+        {
+            Debug.LogError("Config file not found.");
+            return false;
+        }
         catch(IOException e)
         {
-            Debug.LogError("Failed to load config file: " + e.ToString());
+            Debug.LogError("Config file not loaded: " + e.ToString());
             return false;
         }
         
@@ -422,8 +451,8 @@ public class ConfigurationManager : MonoBehaviour
                 switch (tokens[0])
                 {
                     case (TEST_MARKER + TARGET_TEST):
-                        if (TryMakeTest(tokens[1], out temp))
-                            tests.Add(new TestCase(temp, maxBallHeight, tests.Count));
+                        if (ParseVector(tokens[1], out temp))
+                            tests.Add(new TestCase(new Vector3(temp.x, 0, temp.y), temp.z, tests.Count));
                         else
                         {
                             statusText.text = "Illegal values \"" + tokens[1] + "\" for a target test. (line:" + lineNo + ")";
@@ -431,7 +460,7 @@ public class ConfigurationManager : MonoBehaviour
                         }
                         break;
                     case (TEST_MARKER + VELOCITY_TEST):
-                        if (TryMakeTest(tokens[1], out temp))
+                        if (ParseVector(tokens[1], out temp))
                             tests.Add(new TestCase(temp, tests.Count));
                         else
                         {
@@ -440,7 +469,7 @@ public class ConfigurationManager : MonoBehaviour
                         }
                         break;
                     case (TEST_MARKER + PARAMETERS_TEST):
-                        if (TryMakeTest(tokens[1], out temp))
+                        if (ParseVector(tokens[1], out temp))
                             tests.Add(new TestCase(temp.x,temp.y,temp.z, tests.Count));
                         else
                         {
@@ -461,14 +490,14 @@ public class ConfigurationManager : MonoBehaviour
         return true;
     }
     
-    private bool SaveConfig()
+    public bool SaveConfig()
     {
         UpdateValues();
         if (!loadedOk || !auto)
             return false;
         try
         {
-            using (StreamWriter writer = new StreamWriter(configurationFileName.text))
+            using (StreamWriter writer = new StreamWriter("saved_configuration.cfg"))
             {
                 // Write variables
                 writer.WriteLine(VARIABLE_MARKER + "starting_distance" + ASSIGN_MARKER + startingDistance.ToString());
@@ -512,25 +541,25 @@ public class ConfigurationManager : MonoBehaviour
         return true;
     }
 
-    private bool TryMakeTest(string values, out Vector3 vector)
+    private bool ParseVector(string input, out Vector3 vector)
     {
         vector = new Vector3();
-        string[] tokens = values.Split(',');
+        string[] tokens = input.Split(',');
         // Check format
         if (tokens.Length != 3)
             return false;
 
         float[] vals = new float[3];
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < tokens.Length; i++)
         {
             if (!float.TryParse(tokens[i], out vals[i]))
                 return false;
         }
 
         // Assign contents
-        vector.x = values[0];
-        vector.y = values[1];
-        vector.z = values[2];
+        vector.x = vals[0];
+        vector.y = vals[1];
+        vector.z = vals[2];
 
         return true;
     }

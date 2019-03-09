@@ -12,6 +12,7 @@ public class TestCase : System.Object
     internal BuildType buildType;
     internal int testNumber;
     internal Vector3 target;
+    internal float height;
     internal Vector3 initialVelocityVector;
     internal float launchSpeed; // Meters per second
     internal float launchAngle; // Degrees from plane
@@ -43,6 +44,7 @@ public class TestCase : System.Object
         launchAngle = Vector3.Angle(Vector3.right, velocityVector.XY());
         
         this.target = target;
+        this.height = height;
 
         buildType = BuildType.Target;
     }
@@ -66,6 +68,7 @@ public class TestCase : System.Object
         float t = (initialVelocityVector.y + Mathf.Sqrt(initialVelocityVector.y * initialVelocityVector.y + 2 * Physics.gravity.y)) / (-1 * Physics.gravity.y);
         target.x = t * initialVelocityVector.x;
         target.z = t * initialVelocityVector.z;
+        height = initialVelocityVector.y * initialVelocityVector.y / 2 * Physics.gravity.y + 1; // +1 since the ball starts at (0,1,0)
 
         buildType = BuildType.InitialVelocity;
     }
@@ -88,6 +91,7 @@ public class TestCase : System.Object
         float t = (initialVelocityVector.y + Mathf.Sqrt(initialVelocityVector.y * initialVelocityVector.y + 2 * Physics.gravity.y)) / (-1 * Physics.gravity.y);
         target.x = t * initialVelocityVector.x;
         target.z = t * initialVelocityVector.z;
+        height = initialVelocityVector.y * initialVelocityVector.y / 2 * Physics.gravity.y + 1; // +1 since the ball starts at (0,1,0)
 
         buildType = BuildType.InitialParameters;
     }
@@ -98,7 +102,7 @@ public class TestCase : System.Object
 
         Transform textColumns = gameObject.transform.Find("TextCols");
 
-        foreach (Transform child in gameObject.transform)
+        foreach (Transform child in textColumns)
         {
             switch (child.name)
             {
@@ -106,21 +110,41 @@ public class TestCase : System.Object
                     child.GetComponent<Text>().text = "#" + testNumber;
                     break;
                 case "Speed":
-                    child.GetComponent<Text>().text = launchSpeed.ToString(floatFormat) + "m/s";
+                    child.GetComponent<Text>().text = launchSpeed.ToString(floatFormat);
                     break;
                 case "Angle":
-                    child.GetComponent<Text>().text = launchAngle.ToString(floatFormat) + "°";
+                    child.GetComponent<Text>().text = launchAngle.ToString(floatFormat);
                     break;
                 case "Deviation":
-                    child.GetComponent<Text>().text = launchDeviation.ToString(floatFormat) + "°";
+                    child.GetComponent<Text>().text = launchDeviation.ToString(floatFormat);
+                    break;
+                case "TargetX":
+                    child.GetComponent<Text>().text = target.x.ToString(floatFormat);
+                    break;
+                case "TargetZ":
+                    child.GetComponent<Text>().text = target.z.ToString(floatFormat);
+                    break;
+                case "MaxHeight":
+                    child.GetComponent<Text>().text = height.ToString(floatFormat);
+                    break;
+                case "InitVelX":
+                    child.GetComponent<Text>().text = initialVelocityVector.x.ToString(floatFormat);
+                    break;
+                case "InitVelY":
+                    child.GetComponent<Text>().text = initialVelocityVector.y.ToString(floatFormat);
+                    break;
+                case "InitVelZ":
+                    child.GetComponent<Text>().text = initialVelocityVector.z.ToString(floatFormat);
                     break;
             }
         }
     }
 
-    public string ToCSVLine()
+    public string ToCSVLine ()
     {
-        object[] vals = { testNumber, launchSpeed, launchAngle, launchDeviation, target.x, target.z,
+        object[] vals = { testNumber,
+            launchSpeed, launchAngle, launchDeviation,
+            target.x, target.z, height,
             initialVelocityVector.x, initialVelocityVector.y, initialVelocityVector.z};
         return DataManager.ToCSVLine(vals);
     }

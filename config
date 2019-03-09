@@ -1,6 +1,6 @@
 $starting_distance=30
 $max_speed=5
-$number_of_tests=11
+$number_of_tests=2
 $practice_runs=10
 $trial_runs=30
 $pause_between_trials=2.1
@@ -11,4 +11,4 @@ $ball_friction=0.01
 $auto=True
 $max_ball_height=20
 $radius=8
-$targets_shape=0
+$targets_shape=1

@@ -14,8 +14,7 @@ public class SubjectOperations : MonoBehaviour
     public Slider genderSlider;
     public Button setSubjectButton;
     public Button clearSubjectButton;
-    public Button buildTestButton;
-    public Button controlViewButton;
+    public Button loadButton;
     public Text statusText;
     public TrialsManager manager;
     public DataManager dataWriter;
@@ -32,7 +31,7 @@ public class SubjectOperations : MonoBehaviour
         hasSubject = false;
         clearSubjectButton.interactable = false;
         controlViewButton.interactable = false;
-        buildTestButton.interactable = false;
+        loadButton.interactable = false;
     }
 
     public void SetSubject()
@@ -61,16 +60,16 @@ public class SubjectOperations : MonoBehaviour
         ageField.interactable = false;
         genderSlider.interactable = false;
         handednessSlider.interactable = false;
+        otherField.interactable = false;
         setSubjectButton.interactable = false;
         clearSubjectButton.interactable = true;
-        controlViewButton.interactable = true;
         // Change status 
         statusText.text = "Subject set";
-        statusText.color = CustomColors.Green;
+        statusText.color = CustomColors.Black;
         // Initialise data writer
         dataWriter.Init(subjectName,age,gender,handedness,otherInfo);
-        // Unlock build tests button
-        buildTestButton.interactable = true;
+        // Unlock load button
+        loadButton.interactable = true;
     }
 
     public void ClearSubject()
@@ -86,16 +85,16 @@ public class SubjectOperations : MonoBehaviour
         ageField.interactable = true;
         genderSlider.interactable = true;
         handednessSlider.interactable = true;
+        otherField.interactable = true;
         setSubjectButton.interactable = true;
         clearSubjectButton.interactable = false;
-        controlViewButton.interactable = false;
         statusText.text = "Subject cleared";
         statusText.color = CustomColors.Black;
         // Also reset the trials
         manager.ResetTests();
         // Also reset the dataWriter
         dataWriter.ResetWriter();
-        // And block build test button
-        buildTestButton.interactable = false;
+        // And block load test button
+        loadButton.interactable = false;
     }
 }

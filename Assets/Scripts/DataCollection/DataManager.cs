@@ -65,7 +65,7 @@ public class DataManager : MonoBehaviour
         // Write test list file
         string testsFileName = dataPath + "\\test_list.csv";
         string output = "" +
-            "No,Speed,Angle,Deviation,TargetX,TargetZ,VelocityX,VelocityY,VelocityZ\r\n"; // Columns
+            "No,Speed,Angle,Deviation,TargetX,TargetZ,MaxHeight,VelocityX,VelocityY,VelocityZ\r\n"; // Columns
         foreach (TestCase test in tests)
         {
             output += test.ToCSVLine(); // Values

@@ -7,6 +7,8 @@ using UnityEngine.UI;
 public class AutoManualToggle : MonoBehaviour
 {
     public InputField configField;
+    public Button loadButton;
+    public Button saveButton;
     public BallPresetDropdown presets;
     public Selectable[] settingElements;
     
@@ -39,12 +41,16 @@ public class AutoManualToggle : MonoBehaviour
         if (thisSlider.value == 1) // MANUAL
         {
             configField.interactable = true;
+            loadButton.interactable = true;
+            saveButton.interactable = false;
             foreach (Selectable element in settingElements)
                 element.interactable = false;
         }
         else if(thisSlider.value == 0) // AUTO
         {
             configField.interactable = false;
+            loadButton.interactable = false;
+            saveButton.interactable = true;
             foreach (Selectable element in settingElements)
                 element.interactable = true;
             presets.OnValueChanged();
