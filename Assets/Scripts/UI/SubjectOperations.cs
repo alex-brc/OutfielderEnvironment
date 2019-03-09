@@ -30,7 +30,6 @@ public class SubjectOperations : MonoBehaviour
     {
         hasSubject = false;
         clearSubjectButton.interactable = false;
-        controlViewButton.interactable = false;
         loadButton.interactable = false;
     }
 

@@ -112,7 +112,7 @@ public class ConfigurationManager : MonoBehaviour
     public void ResetTests()
     {
         tests = new List<TestCase>();
-        manager.testCases = null;
+        manager.TestCases = null;
         builder.ClearUI();
         controlViewButton.interactable = false;
     }
@@ -128,9 +128,9 @@ public class ConfigurationManager : MonoBehaviour
             tests = builder.GetTests();
         }
 
-        manager.testCases = tests.ToArray();
+        manager.TestCases = tests.ToArray();
         builder.UpdateUI();
-        dataManager.WriteTestsFile(manager.testCases);
+        dataManager.WriteTestsFile(manager.TestCases);
         controlViewButton.interactable = true;
     }
 
@@ -309,7 +309,7 @@ public class ConfigurationManager : MonoBehaviour
                 }
             }
         }
-        catch(FileNotFoundException e)
+        catch(FileNotFoundException)
         {
             Debug.LogError("Config file not found.");
             return false;

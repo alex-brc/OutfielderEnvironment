@@ -27,20 +27,20 @@ public class DataCollector : MonoBehaviour, Collector
     public void StartCollecting()
     {
         // Make the file
-        fileName = dataManager.testPath + "\\" + fileName;
+        string fullFileName = dataManager.testPath + "\\" + fileName;
         // Write the columns
         string output =
             "Time,Frame," +
             "Position_X,Position_Y,Position_Z," +
             "Rotation_X,Rotation_Y,Rotation_Z," +
             "Velocity_X,Velocity_Y,Velocity_Z\r\n";
-        File.WriteAllText(fileName, output);
+        File.WriteAllText(fullFileName, output);
 
         startingFrame = Time.frameCount;
         startingTime = Time.time;
         
         stringBuilder = new StringBuilder();
-        writerCoroutine = StartCoroutine(DataManager.WriterRoutine(dataManager, fileName, stringBuilder));
+        writerCoroutine = StartCoroutine(DataManager.WriterRoutine(dataManager, fullFileName, stringBuilder));
     }
 
     public void StopCollecting()
@@ -72,6 +72,6 @@ public class DataCollector : MonoBehaviour, Collector
             return;
         
         if (dataManager.Running())
-            stringBuilder.AppendLine(Record());
+            stringBuilder.Append(Record());
     }
 }

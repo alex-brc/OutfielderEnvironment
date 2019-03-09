@@ -22,7 +22,7 @@ public class PlayerController : MonoBehaviour, ICatcher
     internal bool calibrating = false;
     internal bool calibrated = false;
 
-    private Rigidbody rigidbody;
+    private new Rigidbody rigidbody;
     private Vector3 minimumLean, maximumLean, zeroPosition;
 
     void Start() {

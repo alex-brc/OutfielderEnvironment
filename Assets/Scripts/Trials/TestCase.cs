@@ -20,7 +20,6 @@ public class TestCase : System.Object
 
     private string floatFormat = "0.##";
     internal GameObject testCaseObject;
-    internal Text testCounterBox;
 
     /// <summary>
     /// Create a test case whose ball will land at the specified target,

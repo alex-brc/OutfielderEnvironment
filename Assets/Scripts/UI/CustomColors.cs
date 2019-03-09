@@ -9,4 +9,13 @@ public static class CustomColors
         Orange = new Color(255 / 255.0f, 195 / 255.0f, 30 / 255.0f),
         Red = new Color(244 / 255.0f, 66 / 255.0f, 66 / 255.0f),
         Black = new Color(50 / 255.0f, 50 / 255.0f, 50 / 255.0f);
+    
+    public static class Background
+    {
+        public static readonly Color
+        Green = new Color(108 / 255.0f, 247 / 255.0f, 86 / 255.0f, 0.25f),
+        Orange = new Color(255 / 255.0f, 195 / 255.0f, 30 / 255.0f, 0.25f),
+        Red = new Color(244 / 255.0f, 66 / 255.0f, 66 / 255.0f, 0.25f),
+        White = new Color(1, 1, 1, 0.25f);
+    }
 }

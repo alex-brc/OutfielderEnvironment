@@ -91,7 +91,7 @@ public class TestBuilder : MonoBehaviour
             // Update UI using tests from manager
             Vector2 min = Vector2.positiveInfinity;
             Vector2 max = Vector2.negativeInfinity;
-            foreach (TestCase test in manager.testCases)
+            foreach (TestCase test in manager.TestCases)
             {
                 // Find all targets relative to catcher pos
                 Vector3 relativeTarget = test.target - manager.catcherStartPosition; 
@@ -143,7 +143,7 @@ public class TestBuilder : MonoBehaviour
         }
 
         // Position markers
-        cPos.text = "(" + manager.catcherStartPosition.x + ",0)";
+        cPos.text = "(" + manager.catcherStartPosition.x.ToString("0.##") + ",0)";
         bPos.text = "(0,0)";
         // Range markers
         float temp = targetDisplay.rect.width / scalingFactor;

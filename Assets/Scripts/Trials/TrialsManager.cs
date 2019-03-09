@@ -36,12 +36,27 @@ public class TrialsManager : MonoBehaviour
     public ConfigurationManager confManager;
 
     internal TestCase loadedTestCase;
-    internal TestCase[] testCases;
+    private TestCase[] testCases;
     internal ICatcher catcher;
     internal TrialStatus trialStatus = TrialStatus.Ready;
     internal float startingTime = 0;
     internal float startingFrame = 0;
-    
+    internal bool testsChanged = false;
+
+    public TestCase[] TestCases
+    {
+        get
+        {
+            return testCases;
+        }
+
+        set
+        {
+            testsChanged = true;
+            testCases = value;
+        }
+    }
+
     void Start()
     {
         baseball.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeAll;
@@ -69,7 +84,7 @@ public class TrialsManager : MonoBehaviour
         // Bring catcher to field
         catcher.GetRigidbody().position = catcherStartPosition;
         catcher.GetRigidbody().transform.eulerAngles = new Vector3(0, -90, 0);
-        
+        Debug.Log("Starting trial");
         // Update counter color
         infoBox.color = CustomColors.Black;
 
@@ -77,9 +92,9 @@ public class TrialsManager : MonoBehaviour
         float currCountdownValue = pauseBetweenTrials;
         while (currCountdownValue > 0)
         {
-            infoBox.text = "Starting in " + currCountdownValue + "...";
-            yield return new WaitForSeconds(1.0f);
-            currCountdownValue--;
+            infoBox.text = "Starting in " + currCountdownValue.ToString("0.##") + "...";
+            yield return new WaitForSeconds(0.01f);
+            currCountdownValue -= 0.01f;
         }
 
         if (type == TestCase.TrialType.Trial)
@@ -90,8 +105,6 @@ public class TrialsManager : MonoBehaviour
         // Update status
         trialStatus = TrialStatus.TrialInProgress;
         
-        // Activate the data collector for the catcher
-        catcher.StartDataCollector();
         // Start the data writer
         dataWriter.StartNewTest(loadedTestCase.testNumber, type);
 
@@ -119,17 +132,11 @@ public class TrialsManager : MonoBehaviour
         trialStatus = TrialStatus.Ready;
         baseball.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeAll;
         // Stop writer
-        catcher.StopDataCollector();
         dataWriter.CompleteTest(caught);
     }
     
     internal void LoadTest(TestCase testCase)
     {
-        if(loadedTestCase != null)
-        {
-            // Then some other test was previously loaded
-            UnloadTest();
-        }
         this.loadedTestCase = testCase;
     }
 
@@ -140,6 +147,6 @@ public class TrialsManager : MonoBehaviour
 
     public void ResetTests()
     {
-        testCases = null;
+        TestCases = null;
     }
 }

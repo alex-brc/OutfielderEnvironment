@@ -144,7 +144,7 @@ public class DataManager : MonoBehaviour
         // Set test number folder
         testPath += "\\Test_#" + testNumber;
         // Create test attempt folder
-        testPath += "\\" + Time.time.ToString("HH-mm-ss");
+        testPath += "\\" + DateTime.Now.ToString("HH-mm-ss");
         Directory.CreateDirectory(testPath);
         
         // Reset frames and time
@@ -175,7 +175,7 @@ public class DataManager : MonoBehaviour
         // Then results
         object[] vals = {
              caught, (Time.time - startingTime), (Time.frameCount - startingFrame)};
-        File.AppendAllText(testPath, ToCSVLine(vals));
+        File.AppendAllText(fileName, ToCSVLine(vals));
     }
 
     public void ResetWriter()

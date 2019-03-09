@@ -12,6 +12,7 @@ public class ContentLoader : MonoBehaviour
 {
     [Header("References")]
     public TrialsManager manager;
+    public AutoTrialRunner runner;
     public GameObject testPrefab;
 
     internal Image[] testBackgrounds;
@@ -19,35 +20,40 @@ public class ContentLoader : MonoBehaviour
     private Rect contentRect;
     private Rect prefabRect;
     private float contentHeight;
-
-    private void Start()
+    
+    public void OnEnable()
     {
+        if (!manager.testsChanged)
+            return;
+
         contentRect = GetComponent<RectTransform>().rect;
         prefabRect = testPrefab.GetComponent<RectTransform>().rect;
-    }
 
-    private void OnEnable()
-    {
         // Set content panel height
-        contentHeight = manager.testCases.Length * prefabRect.height;
+        contentHeight = manager.TestCases.Length * prefabRect.height;
         contentRect.Set(contentRect.x, contentRect.y, contentRect.width, contentHeight);
 
-        testBackgrounds = new Image[manager.testCases.Length];
+        testBackgrounds = new Image[manager.TestCases.Length];
         // Add test prefabs
-        for(int i = 0; i < manager.testCases.Length; i++)
+        for(int i = 0; i < manager.TestCases.Length; i++)
         {
             // Instantiate
             GameObject newTest = Instantiate(testPrefab, transform);
             Rect newRect = newTest.GetComponent<RectTransform>().rect;
             // Add image to array
-            testBackgrounds[i] = newTest.GetComponent<Image>();
+            testBackgrounds[i] = newTest.transform.Find("TextCols").GetComponent<Image>();
             // Set the position within the content panel
             float newHeight = -newRect.height/2 - i * newRect.height;                  
             newRect.Set(newRect.x, newHeight, newRect.x, newRect.height);
             newTest.transform.localPosition = new Vector3(360, newHeight, 0);
             // Initialise it with values
-            manager.testCases[i].Initialise(newTest);
+            manager.TestCases[i].Initialise(newTest);
             // Done
         }
+
+        // Give these to the runner
+        runner.testBackgrounds = testBackgrounds;
+
+        manager.testsChanged = false;
     }
 }

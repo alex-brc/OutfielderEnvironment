@@ -9,8 +9,6 @@ public class ManualsToggler : MonoBehaviour
     [Header("References")]
     public GameObject[] manualButtons;
     public Button[] autoButtons;
-    
-    internal Button[] testCaseButtons;
 
     private Toggle toggler;
     void Start()
@@ -30,9 +28,6 @@ public class ManualsToggler : MonoBehaviour
                 button.SetActive(true);
                 button.GetComponent<Button>().interactable = true;
             }
-            if(testCaseButtons != null)
-                foreach (Button button in testCaseButtons)
-                    button.interactable = true;
 
             foreach (Button button in autoButtons)
                 button.interactable = false;
@@ -41,9 +36,6 @@ public class ManualsToggler : MonoBehaviour
         {
             foreach (GameObject button in manualButtons)
                 button.SetActive(false);
-            if (testCaseButtons != null)
-                foreach (Button button in testCaseButtons)
-                    button.interactable = false;
 
             foreach (Button button in autoButtons)
                 button.interactable = true;
