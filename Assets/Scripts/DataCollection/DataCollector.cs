@@ -62,8 +62,7 @@ public class DataCollector : MonoBehaviour, Collector
         // Make those values into a comma separated line
         return DataManager.ToCSVLine(vals);
     }
-
-    // Write every physics update
+    
     void FixedUpdate()
     {
         // If the writer is off don't write anything. 
