@@ -14,12 +14,13 @@ public class SubjectOperations : MonoBehaviour
     public Slider genderSlider;
     public Button setSubjectButton;
     public Button clearSubjectButton;
-    public Button loadButton;
+    public AutoManualToggle autoManualToggle;
     public Text statusText;
     public TrialsManager manager;
     public DataManager dataWriter;
+    public ConfigurationManager confManager;
 
-    bool hasSubject;
+    internal bool hasSubject;
     internal string subjectName;
     internal string age;
     internal string otherInfo;
@@ -30,7 +31,7 @@ public class SubjectOperations : MonoBehaviour
     {
         hasSubject = false;
         clearSubjectButton.interactable = false;
-        loadButton.interactable = false;
+        autoManualToggle.Interactable = false;
     }
 
     public void SetSubject()
@@ -67,8 +68,8 @@ public class SubjectOperations : MonoBehaviour
         statusText.color = CustomColors.Black;
         // Initialise data writer
         dataWriter.Init(subjectName,age,gender,handedness,otherInfo);
-        // Unlock load button
-        loadButton.interactable = true;
+        // Unlock test settings
+        autoManualToggle.Interactable = true;
     }
 
     public void ClearSubject()
@@ -94,6 +95,6 @@ public class SubjectOperations : MonoBehaviour
         // Also reset the dataWriter
         dataWriter.ResetWriter();
         // And block load test button
-        loadButton.interactable = false;
+        autoManualToggle.Interactable = false;
     }
 }

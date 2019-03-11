@@ -28,9 +28,9 @@ public class ConfigurationManager : MonoBehaviour
     public float radius = 8;
     public int targetsShape = 0;
     public int ballPreset = 1;
-    public float ballMass = 0f;
-    public float ballSize = 0f;
-    public float ballFriction = 0f;
+    public float ballMass = 0.1f;
+    public float ballSize = 0.14f;
+    public float ballFriction = 0.01f;
     public float pauseBetweenTrials = 3;
 
     [Header("UI elements")]
@@ -59,17 +59,19 @@ public class ConfigurationManager : MonoBehaviour
     public TestBuilder builder;
     public DataManager dataManager;
     public PlayerController player;
+    public SubjectOperations subjectOp;
     public Rigidbody ball;
-
+    
+    internal bool loadedOk;
+    internal bool testsBuilt;
     internal List<TestCase> tests;
-
-    private bool loadedOk;
 
     private void Start()
     {
         tests = new List<TestCase>();
         loadButton.interactable = false;
         buildButton.interactable = false;
+        testsBuilt = false;
         FillUI();
     }
 
@@ -131,7 +133,8 @@ public class ConfigurationManager : MonoBehaviour
         manager.TestCases = tests.ToArray();
         builder.UpdateUI();
         dataManager.WriteTestsFile(manager.TestCases);
-        controlViewButton.interactable = true;
+        if(subjectOp.hasSubject)
+            controlViewButton.interactable = true;
     }
 
     public void UpdateValues()
@@ -238,7 +241,7 @@ public class ConfigurationManager : MonoBehaviour
     private bool CheckConfig()
     {
         if (numberOfTests <= 0
-        || practiceRuns <= 0
+        || practiceRuns < 0
         || trialRuns <= 0
         || pauseBetweenTrials <= 0
         || maxSpeed <= 0
@@ -311,12 +314,12 @@ public class ConfigurationManager : MonoBehaviour
         }
         catch(FileNotFoundException)
         {
-            Debug.LogError("Config file not found.");
+            statusText.text = "Config file not found.";
             return false;
         }
         catch(IOException e)
         {
-            Debug.LogError("Config file not loaded: " + e.ToString());
+            statusText.text = "Config file not loaded: " + e.ToString();
             return false;
         }
         
@@ -452,7 +455,7 @@ public class ConfigurationManager : MonoBehaviour
                 {
                     case (TEST_MARKER + TARGET_TEST):
                         if (ParseVector(tokens[1], out temp))
-                            tests.Add(new TestCase(new Vector3(temp.x, 0, temp.y), temp.z, tests.Count));
+                            tests.Add(new TestCase(new Vector3(temp.x, 0, temp.y), temp.z, tests.Count + 1));
                         else
                         {
                             statusText.text = "Illegal values \"" + tokens[1] + "\" for a target test. (line:" + lineNo + ")";
@@ -461,7 +464,7 @@ public class ConfigurationManager : MonoBehaviour
                         break;
                     case (TEST_MARKER + VELOCITY_TEST):
                         if (ParseVector(tokens[1], out temp))
-                            tests.Add(new TestCase(temp, tests.Count));
+                            tests.Add(new TestCase(temp, tests.Count + 1));
                         else
                         {
                             statusText.text = "Illegal values \"" + tokens[1] + "\" for an initial velocity test. (line:" + lineNo + ")";
@@ -470,7 +473,7 @@ public class ConfigurationManager : MonoBehaviour
                         break;
                     case (TEST_MARKER + PARAMETERS_TEST):
                         if (ParseVector(tokens[1], out temp))
-                            tests.Add(new TestCase(temp.x,temp.y,temp.z, tests.Count));
+                            tests.Add(new TestCase(temp.x,temp.y,temp.z, tests.Count + 1));
                         else
                         {
                             statusText.text = "Illegal values \"" + tokens[1] + "\" for a parameters test. (line:" + lineNo + ")";

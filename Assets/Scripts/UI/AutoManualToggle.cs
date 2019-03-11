@@ -11,7 +11,35 @@ public class AutoManualToggle : MonoBehaviour
     public Button saveButton;
     public BallPresetDropdown presets;
     public Selectable[] settingElements;
+    private bool interactable;
     
+
+    public bool Interactable
+    {
+        get
+        {
+            return interactable;
+        }
+        set
+        {
+            if (value == true)
+            {
+                thisSlider.interactable = true;
+                OnValueChanged();
+            }
+            else
+            {
+                thisSlider.interactable = false;
+                // set everything to not interactable until subject is set
+                configField.interactable = false;
+                loadButton.interactable = false;
+                saveButton.interactable = false;
+                foreach (Selectable element in settingElements)
+                    element.interactable = false;
+            }
+
+        }
+    }
     private Slider thisSlider;
 
     public void Awake()

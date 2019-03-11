@@ -26,10 +26,8 @@ public class TrialsManager : MonoBehaviour
     [Header("References")]
     public GameObject baseball;
     public UnityEngine.UI.Text infoBox;
-    public UnityEngine.UI.Text sandboxButtonText;
     public GameObject UI;
     public GameObject overlay;
-    public GameObject testsGroup;
     public DataManager dataWriter;
     public FoveInterface fove;
     public TestBuilder builder;
@@ -42,6 +40,7 @@ public class TrialsManager : MonoBehaviour
     internal float startingTime = 0;
     internal float startingFrame = 0;
     internal bool testsChanged = false;
+    internal bool lastResult = false;
 
     public TestCase[] TestCases
     {
@@ -92,7 +91,7 @@ public class TrialsManager : MonoBehaviour
         float currCountdownValue = pauseBetweenTrials;
         while (currCountdownValue > 0)
         {
-            infoBox.text = "Starting in " + currCountdownValue.ToString("0.##") + "...";
+            infoBox.text = "Starting in " + currCountdownValue.ToString("#") + "...";
             yield return new WaitForSeconds(0.01f);
             currCountdownValue -= 0.01f;
         }
@@ -118,6 +117,7 @@ public class TrialsManager : MonoBehaviour
 
     internal void CompleteTrial(bool caught)
     {
+        lastResult = caught;
         // Update infobox
         infoBox.text = "Trial completed";
         infoBox.color = CustomColors.Black;

@@ -17,7 +17,7 @@ public class ContentLoader : MonoBehaviour
 
     internal Image[] testBackgrounds;
 
-    private Rect contentRect;
+    private RectTransform content;
     private Rect prefabRect;
     private float contentHeight;
     
@@ -26,12 +26,13 @@ public class ContentLoader : MonoBehaviour
         if (!manager.testsChanged)
             return;
 
-        contentRect = GetComponent<RectTransform>().rect;
+        content = GetComponent<RectTransform>();
         prefabRect = testPrefab.GetComponent<RectTransform>().rect;
 
         // Set content panel height
         contentHeight = manager.TestCases.Length * prefabRect.height;
-        contentRect.Set(contentRect.x, contentRect.y, contentRect.width, contentHeight);
+        content.SetHeight(contentHeight);
+        content.SetRight(0);
 
         testBackgrounds = new Image[manager.TestCases.Length];
         // Add test prefabs
@@ -43,8 +44,8 @@ public class ContentLoader : MonoBehaviour
             // Add image to array
             testBackgrounds[i] = newTest.transform.Find("TextCols").GetComponent<Image>();
             // Set the position within the content panel
-            float newHeight = -newRect.height/2 - i * newRect.height;                  
-            newRect.Set(newRect.x, newHeight, newRect.x, newRect.height);
+            float newHeight = -newRect.height / 2 - i * newRect.height;
+
             newTest.transform.localPosition = new Vector3(360, newHeight, 0);
             // Initialise it with values
             manager.TestCases[i].Initialise(newTest);

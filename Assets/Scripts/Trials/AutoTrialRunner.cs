@@ -8,24 +8,56 @@ using UnityEngine.UI;
 public class AutoTrialRunner : MonoBehaviour
 {
     private enum Status { Stopped, Paused, Running, Finished }
-    private enum Type { Trial, Practice }
 
     [Header("References")]
     public PlayerController player;
     public Text statusBox;
+    public ProgressBar progressBar;
+    public LastResult lastResult;
     public Button startButton;
-    public Button practiceButton;
     public Button stopButton;
     public Button pauseButton;
 
     internal Image[] testBackgrounds;
 
-    private Status status;
+    private volatile Status status;
     private Coroutine runner;
     private TrialsManager manager;
-    private int[] testIndexes;
+    private int[] trialIndexes;
     private System.Random rand;
     private int currentIndex;
+    private int numTests;
+    private int numTrials;
+    private int numPractices;
+
+    internal int NumTests
+    {
+        get
+        {
+            return numTests;
+        }
+    }
+    internal int NumTrials
+    {
+        get
+        {
+            return numTrials;
+        }
+    }
+    internal int NumPractices
+    {
+        get
+        {
+            return numPractices;
+        }
+    }
+    internal int CurrentIndex
+    {
+        get
+        {
+            return currentIndex;
+        }
+    }
 
     private void Start()
     {
@@ -37,26 +69,34 @@ public class AutoTrialRunner : MonoBehaviour
         pauseButton.interactable = false;
     }
 
-    public void StartButton()
+    private void UpdateBeforeTest()
     {
-        Start(Type.Trial);
-        practiceButton.interactable = false;
+        // Manage highlights
+        if (CurrentIndex >= 1)
+            testBackgrounds[trialIndexes[CurrentIndex - 1]].color = CustomColors.Background.White; // Previous
+        testBackgrounds[trialIndexes[CurrentIndex]].color = CustomColors.Background.BrightWhite; // Current
+
+        statusBox.text = "Running test #" + (trialIndexes[CurrentIndex] + 1);
     }
 
-    public void PracticeButton()
+    private void UpdateAfterTest(TestCase.TrialType trialType)
     {
-        Start(Type.Practice);
+        // Show last result
+        lastResult.UpdateResult(manager.lastResult);
+
+        // Update progress bars
+        progressBar.UpdateBars(trialType);
     }
 
     /// <summary>
     /// Coroutine that handles loading and unloading, as 
     /// well as starting and stopping them.
     /// </summary>
-    private IEnumerator Runner(int[] testIndexes, Type type)
+    private IEnumerator Runner(int[] testIndexes)
     {
         for (currentIndex = 0;
             (status == Status.Running || status == Status.Paused)
-            && currentIndex < testIndexes.Length;
+            && CurrentIndex < testIndexes.Length;
             currentIndex++)
         {
             if (status == Status.Paused)
@@ -70,40 +110,43 @@ public class AutoTrialRunner : MonoBehaviour
             // Set null position for controller
             player.SetZeroPosition();
 
-            // Start the trial
-            StartCoroutine(manager.StartTrial(TestCase.TrialType.Trial));
+            // Start the trial or practice
+            TestCase.TrialType currentType;
+            if(currentIndex < numPractices)
+                currentType = TestCase.TrialType.Practice;
+            else
+                currentType = TestCase.TrialType.Trial;
+            StartCoroutine(manager.StartTrial(currentType));
 
-            Debug.Log("currentIndex:" + currentIndex);
-            
-            // Manage highlights
-            testBackgrounds[testIndexes[currentIndex]].color = CustomColors.Background.Orange; // Current
-            if(currentIndex >= 1)
-                testBackgrounds[testIndexes[currentIndex-1]].color = CustomColors.Background.Green; // Previous
-            if(currentIndex >= 2)
-                testBackgrounds[testIndexes[currentIndex-2]].color = CustomColors.Background.White; // Previous green one
-
-            // Write status
-            statusBox.text = "Currently at " + (currentIndex + 1) + "/" + testIndexes.Length;
+            // Update view
+            UpdateBeforeTest();
 
             // Wait for the trial to finish
             yield return new WaitForSeconds(0.1f);
             while (manager.trialStatus != TrialsManager.TrialStatus.Ready) 
                 yield return new WaitForSeconds(0.05f);
+
+            // Update bars and result
+            UpdateAfterTest(currentType);
         }
 
         // Stopped or finished?
         if (currentIndex == testIndexes.Length) // Then it finished
         {
             status = Status.Finished;
-            statusBox.text = "Finished";
-            statusBox.color = CustomColors.Green;
+            statusBox.text = "Finished OK";
         }
         else
         {
             status = Status.Stopped;
-            statusBox.text = "Stopped";
+            statusBox.text = "Stopped at " + (currentIndex+1);
             statusBox.color = CustomColors.Red;
         }
+        // Show total number of catcher out of tries
+        lastResult.ShowTotal(numTrials);
+        // And clean hightlight
+        testBackgrounds[trialIndexes[CurrentIndex - 1]].color = CustomColors.Background.White; 
+
         yield return 0;
     }
 
@@ -112,31 +155,48 @@ public class AutoTrialRunner : MonoBehaviour
     /// each of them has been performed the required number
     /// of times required.
     /// </summary>
-    private void Start(Type type)
+    public void StartExperiment()
     {
-        testIndexes = new int[manager.TestCases.Length * manager.trialRuns];
-        // Fill the testIndexes with timesToRunEachTrial copies of each test case index
-        for (int i = 0; i < manager.TestCases.Length; i++)
-            for (int j = 0; j < manager.trialRuns; j++)
-                testIndexes[i * manager.trialRuns + j] = i;
+        numTests = manager.TestCases.Length;
+        numTrials = manager.trialRuns * numTests;
+        numPractices = manager.practiceRuns * numTests;
 
-        // Shuffle them
+        trialIndexes = new int[NumTrials + numPractices];
+
+        // Fill the testIndexes with trialRuns+practiceRuns copies of each test case index
+        for (int i = 0; i < numTests; i++)
+            for (int j = 0; j < (manager.trialRuns + manager.practiceRuns); j++)
+                trialIndexes[i * manager.trialRuns + j] = i;
+
+        // Shuffle the practices
         int t,r;
-        for (int i = testIndexes.Length - 1; i >= 0; i--) {
+        for (int i = numPractices - 1; i >= 0; i--) {
             r = rand.Next(0,i);
-            t = testIndexes[i];
-            testIndexes[i] = testIndexes[r];
-            testIndexes[r] = t;
+            t = trialIndexes[i];
+            trialIndexes[i] = trialIndexes[r];
+            trialIndexes[r] = t;
         }
-        
+        // Shuffle the trials
+        for (int i = trialIndexes.Length - 1; i >= numPractices; i--)
+        {
+            r = rand.Next(0, i);
+            t = trialIndexes[i];
+            trialIndexes[i] = trialIndexes[r];
+            trialIndexes[r] = t;
+        }
+
         // Set the catcher
         manager.catcher = player;
 
         // Finally, update the status and buttons
         status = Status.Running;
 
+        // Reset and start the bars
+        progressBar.Initialise();
+        statusBox.text = "Running";
+        
         // Start the runner
-        runner = StartCoroutine(Runner(testIndexes, type));
+        runner = StartCoroutine(Runner(trialIndexes));
 
         pauseButton.interactable = true;
     }
@@ -152,7 +212,7 @@ public class AutoTrialRunner : MonoBehaviour
             status = Status.Paused;
             statusBox.text = "Paused";
             statusBox.color = CustomColors.Orange;
-            testBackgrounds[testIndexes[currentIndex]].color = CustomColors.Background.Red;
+            testBackgrounds[trialIndexes[currentIndex]].color = CustomColors.Background.Red;
             pauseButton.GetComponent<Text>().text = "Resume";
             stopButton.interactable = true;
         }
@@ -161,7 +221,7 @@ public class AutoTrialRunner : MonoBehaviour
             status = Status.Running;
             statusBox.text = "Running";
             statusBox.color = CustomColors.Black;
-            testBackgrounds[testIndexes[currentIndex]].color = CustomColors.Background.Orange;
+            testBackgrounds[trialIndexes[currentIndex]].color = CustomColors.Background.Orange;
             pauseButton.GetComponent<Text>().text = "Pause";
             stopButton.interactable = false;
         }

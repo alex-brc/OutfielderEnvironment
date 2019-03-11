@@ -96,7 +96,6 @@ public class TestBuilder : MonoBehaviour
                 // Find all targets relative to catcher pos
                 Vector3 relativeTarget = test.target - manager.catcherStartPosition; 
                 relativeTargets.Add(relativeTarget);
-                Debug.Log("Relative target: " + relativeTarget);
                 // Find the range of the targets
                 Vector3 pos = new Vector3(-relativeTarget.x, -relativeTarget.z);
                 if (pos.x < min.x)
@@ -108,30 +107,25 @@ public class TestBuilder : MonoBehaviour
                 if (pos.y > max.y)
                     max.y = pos.y;
             }
-            Debug.Log("Min: " + min + " Max: " + max);
             // Find scaling factor
             float uiY = targetDisplay.rect.height;
             // The range we have around the catcher for the tests to fit in is
             float yTestRange = targetDisplay.rect.height / 2;
-            float xTestRange = targetDisplay.rect.width + cTransform.localPosition.x; // since this position is going to be negative
+            float xTestRange = (targetDisplay.rect.width + cTransform.localPosition.x)/2; // since this position is going to be negative
             // Scale for the maximum of the range values
             float biggest = Mathf.Max(Mathf.Abs(max.x), Mathf.Abs(min.x),
                            Mathf.Abs(max.y), Mathf.Abs(min.y));
-            Debug.Log("biggest is " + biggest);
             if (biggest == Mathf.Abs(max.x) || biggest == Mathf.Abs(min.x)) // then it's wider than tall
                 scalingFactor = fillRatio * (xTestRange / biggest);
             else // it's taller than wide
                 scalingFactor = fillRatio * (yTestRange / biggest);
-
-            Debug.Log("Scaling factor: " + scalingFactor);
             
             this.relativeTargets = relativeTargets.ToArray();
-
         }
         else
         {
             // Tests should've been built previously
-            scalingFactor = fillRatio * 100 / confManager.radius;
+            scalingFactor = fillRatio * (targetDisplay.rect.height / 2) / confManager.radius;
         }
 
         foreach (Vector3 target in relativeTargets)
@@ -146,7 +140,7 @@ public class TestBuilder : MonoBehaviour
         cPos.text = "(" + manager.catcherStartPosition.x.ToString("0.##") + ",0)";
         bPos.text = "(0,0)";
         // Range markers
-        float temp = targetDisplay.rect.width / scalingFactor;
+        float temp =  manager.catcherStartPosition.x + targetDisplay.rect.width / scalingFactor / 2;
         xRange.text = "range(x) = (" + temp.ToString("0.##") + ",0)";
         temp = targetDisplay.rect.height / scalingFactor / 2;
         zRange.text = "range(z) = (" + (-temp).ToString("0.##") + "," + temp.ToString("0.##") + ")";
