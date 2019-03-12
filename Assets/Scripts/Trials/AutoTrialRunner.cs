@@ -61,12 +61,46 @@ public class AutoTrialRunner : MonoBehaviour
 
     private void Start()
     {
+        stopButton.interactable = false;
+        pauseButton.interactable = false;
+
         status = Status.Stopped;
         statusBox.text = "Ready to start";
         manager = GetComponent<TrialsManager>();
         rand = new System.Random();
-        stopButton.interactable = false;
-        pauseButton.interactable = false;
+    }
+
+    public void StartButton()
+    {
+        StartExperiment();
+        startButton.interactable = false;
+    }
+
+    public void PauseButton()
+    {
+        if (status == Status.Running)
+        {
+            PauseExperiment();
+            statusBox.text = "Paused";
+            statusBox.color = CustomColors.Orange;
+            testBackgrounds[trialIndexes[currentIndex]].color = CustomColors.Background.Red;
+            pauseButton.transform.Find("Text").GetComponent<Text>().text = "Resume";
+            stopButton.interactable = true;
+        }
+        else if (status == Status.Paused)
+        {
+            ResumeExperiment();
+            statusBox.text = "Running";
+            statusBox.color = CustomColors.Black;
+            testBackgrounds[trialIndexes[currentIndex]].color = CustomColors.Background.Orange;
+            pauseButton.transform.Find("Text").GetComponent<Text>().text = "Pause";
+            stopButton.interactable = false;
+        }
+    }
+
+    public void StopButton()
+    {
+        StopExperiment();
     }
 
     private void UpdateBeforeTest()
@@ -82,7 +116,7 @@ public class AutoTrialRunner : MonoBehaviour
     private void UpdateAfterTest(TestCase.TrialType trialType)
     {
         // Show last result
-        lastResult.UpdateResult(manager.lastResult);
+        lastResult.UpdateResult(manager.lastResult, trialType);
 
         // Update progress bars
         progressBar.UpdateBars(trialType);
@@ -94,22 +128,18 @@ public class AutoTrialRunner : MonoBehaviour
     /// </summary>
     private IEnumerator Runner(int[] testIndexes)
     {
-        for (currentIndex = 0;
-            (status == Status.Running || status == Status.Paused)
-            && CurrentIndex < testIndexes.Length;
-            currentIndex++)
+        currentIndex = 0;
+        while((status == Status.Running || status == Status.Paused)
+            && currentIndex < testIndexes.Length)
         {
             if (status == Status.Paused)
-            {
+            { 
                 yield return new WaitForSeconds(0.05f);
                 continue;
             }
             // Load the test with number index[currentIndex]
             manager.LoadTest(manager.TestCases[testIndexes[currentIndex]]);
-
-            // Set null position for controller
-            player.SetZeroPosition();
-
+            
             // Start the trial or practice
             TestCase.TrialType currentType;
             if(currentIndex < numPractices)
@@ -128,6 +158,9 @@ public class AutoTrialRunner : MonoBehaviour
 
             // Update bars and result
             UpdateAfterTest(currentType);
+
+            // Advance
+            currentIndex++;
         }
 
         // Stopped or finished?
@@ -145,7 +178,9 @@ public class AutoTrialRunner : MonoBehaviour
         // Show total number of catcher out of tries
         lastResult.ShowTotal(numTrials);
         // And clean hightlight
-        testBackgrounds[trialIndexes[CurrentIndex - 1]].color = CustomColors.Background.White; 
+        testBackgrounds[trialIndexes[CurrentIndex - 1]].color = CustomColors.Background.White;
+        // Reactivate button
+        startButton.interactable = true;
 
         yield return 0;
     }
@@ -155,7 +190,7 @@ public class AutoTrialRunner : MonoBehaviour
     /// each of them has been performed the required number
     /// of times required.
     /// </summary>
-    public void StartExperiment()
+    private void StartExperiment()
     {
         numTests = manager.TestCases.Length;
         numTrials = manager.trialRuns * numTests;
@@ -186,7 +221,7 @@ public class AutoTrialRunner : MonoBehaviour
         }
 
         // Set the catcher
-        manager.catcher = player;
+        manager.player = player;
 
         // Finally, update the status and buttons
         status = Status.Running;
@@ -205,36 +240,21 @@ public class AutoTrialRunner : MonoBehaviour
     /// Pauses running through trials. Lets the running trial 
     /// finish.
     /// </summary>
-    public void Pause()
+    private void PauseExperiment()
     {
-        if (status == Status.Running)
-        {
-            status = Status.Paused;
-            statusBox.text = "Paused";
-            statusBox.color = CustomColors.Orange;
-            testBackgrounds[trialIndexes[currentIndex]].color = CustomColors.Background.Red;
-            pauseButton.GetComponent<Text>().text = "Resume";
-            stopButton.interactable = true;
-        }
-        else if(status == Status.Paused)
-        {
-            status = Status.Running;
-            statusBox.text = "Running";
-            statusBox.color = CustomColors.Black;
-            testBackgrounds[trialIndexes[currentIndex]].color = CustomColors.Background.Orange;
-            pauseButton.GetComponent<Text>().text = "Pause";
-            stopButton.interactable = false;
-        }
+        status = Status.Paused;
+    }
+
+    private void ResumeExperiment()
+    {
+        status = Status.Running;
     }
 
     /// <summary>
     /// Stops the experiment. Can only stop while paused.
     /// </summary>
-    public void Stop()
+    private void StopExperiment()
     {
-        if (status != Status.Paused) // just in case
-            return;
-
         status = Status.Stopped;
     }
 }

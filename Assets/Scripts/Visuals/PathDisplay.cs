@@ -5,8 +5,6 @@ using UnityEngine;
 [RequireComponent(typeof(LineRenderer))]
 public class PathDisplay : MonoBehaviour
 {
-    public GameObject target;
-
     private LineRenderer line;
     private int currentPosition = 0;
 
@@ -17,14 +15,23 @@ public class PathDisplay : MonoBehaviour
         line.loop = false;
     }
 
-    private void Update()
+    public void UpdateLine(Vector3 position)
     {
+        if (position == Vector3.zero)
+            return;
         line.positionCount++;
-        line.SetPosition(currentPosition++, target.transform.position);
+        line.SetPosition(currentPosition++, position);
     }
 
-    private void Clear()
+    public void Clear()
     {
+        line.SetPositions(new Vector3[0]);
         line.positionCount = 0;
+        currentPosition = 0;
+    }
+
+    public void ToggleShow(bool val)
+    {
+        line.enabled = val;
     }
 }

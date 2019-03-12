@@ -12,25 +12,22 @@ public class ViewManager : MonoBehaviour
 
     [Header("References")]
     public Canvas UI;
-    public Canvas overlay;
     public Camera UICamera;
     public Camera playerCamera; 
 
-    // Some *very* rough state management out here, but is stable
+    // Some rough state management out here, but it's stable
     void Update()
     {
         if (Input.GetKeyUp(view1)) // Menu/UI view
         {
             UI.enabled = true;
-            overlay.enabled = false;
-
+            
             playerCamera.enabled = false;
             UICamera.enabled = true;
         }
         else if (Input.GetKeyUp(view2)) // Overview camera
         {
             UI.enabled = false;
-            overlay.enabled = true;
 
             playerCamera.enabled = false;
             UICamera.enabled = true;
@@ -38,7 +35,6 @@ public class ViewManager : MonoBehaviour
         else if (Input.GetKeyUp(view3)) // Player camera
         {
             UI.enabled = false;
-            overlay.enabled = true;
 
             playerCamera.enabled = true;
             UICamera.enabled = false;

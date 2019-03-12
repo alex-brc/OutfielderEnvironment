@@ -4,10 +4,13 @@ using UnityEngine;
 
 public class Grapher : MonoBehaviour
 {
+    private readonly Vector3 ZERO_POS = new Vector3(-80, +55, 0);
+
     public TrialsManager manager;
-    public float maximumTime = 3;
     public float accelerationDisplayMultiplier = 6;
     public int accelerationSamples = 3;
+
+    private float maximumTime;
 
     private LineRenderer deltaGraph;
     private LineRenderer alphaGraph;
@@ -54,8 +57,9 @@ public class Grapher : MonoBehaviour
         {
             // Initialise for a new trial
             trialRunning = true;
-            catcherRb = manager.catcher.GetRigidbody();
-            baseballRb = manager.baseball.GetComponent<Rigidbody>();
+            catcherRb = manager.player.GetRigidbody();
+            baseballRb = manager.ballRb.GetComponent<Rigidbody>();
+            maximumTime = manager.loadedTestCase.duration;
 
             // Reset linerenderers
             deltaGraph.positionCount = 1;
@@ -78,7 +82,7 @@ public class Grapher : MonoBehaviour
             deltaGraph.positionCount++;
             deltaGraph.SetPosition(
                 deltaGraph.positionCount - 1,
-                new Vector3(currentT,
+                ZERO_POS + new Vector3(currentT,
                             currentDelta));
             // Add new delta acceleration
             Vector3 previousDelta = deltaGraph.GetPosition(deltaGraph.positionCount - 2);
@@ -87,7 +91,7 @@ public class Grapher : MonoBehaviour
             ddeltaGraph.positionCount++;
             ddeltaGraph.SetPosition(
                 ddeltaGraph.positionCount - 1,
-                new Vector3(currentT,
+                ZERO_POS + new Vector3(currentT,
                             deltaFilter.Filter(deltaDelta / deltaT) * accelerationDisplayMultiplier));
 
             // Add new alpha angle
@@ -96,7 +100,7 @@ public class Grapher : MonoBehaviour
             alphaGraph.positionCount++;
             alphaGraph.SetPosition(
                 alphaGraph.positionCount - 1,
-                new Vector3(currentT,
+                ZERO_POS + new Vector3(currentT,
                             currentAlpha));
 
             // Add new delta alpha
@@ -105,7 +109,7 @@ public class Grapher : MonoBehaviour
             dalphaGraph.positionCount++;
             dalphaGraph.SetPosition(
                 dalphaGraph.positionCount - 1,
-                new Vector3(currentT,
+                ZERO_POS + new Vector3(currentT,
                             alphaFilter.Filter(deltaAlpha / deltaT) * accelerationDisplayMultiplier));
         }
     }

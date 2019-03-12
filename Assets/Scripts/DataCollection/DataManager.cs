@@ -21,7 +21,7 @@ public class DataManager : MonoBehaviour
     public FoveInterface fove;
     
     internal string testPath;
-    internal List<Collector> collectors;
+    internal List<ICollector> collectors;
     
     private string dataPath;
     private long startingFrame;
@@ -31,7 +31,7 @@ public class DataManager : MonoBehaviour
     public void Awake()
     {
         // Init workers list
-        collectors = new List<Collector>();
+        collectors = new List<ICollector>();
     }
 
     public static string ToCSVLine(object[] vals)
@@ -73,23 +73,6 @@ public class DataManager : MonoBehaviour
         File.WriteAllText(testsFileName, output);
     }
 
-    // Writing operations are performed once every 
-    // writeInterval seconds so as to avoid writing 
-    // to file on every frame.
-    internal static IEnumerator WriterRoutine(DataManager writer, string fileName, StringBuilder stringBuilder)
-    {
-        do
-        {
-            // Write contents of stringbuilder to file
-            string output = stringBuilder.ToString();
-            stringBuilder = new StringBuilder();
-            File.AppendAllText(fileName, output);
-            // Wait for writeInterval seconds before writing again.
-            yield return new WaitForSeconds(writer.writeInterval);
-        }
-        while (writer.Running());
-    }
-    
     public static String ExtractObjectPositionsForMatlab(String fileName, String gameObjectName)
     {
         StringBuilder X = new StringBuilder().Append("xPos = [ ");
@@ -155,7 +138,7 @@ public class DataManager : MonoBehaviour
         writerOn = true;
 
         // Start all data collectors
-        foreach (Collector c in collectors)
+        foreach (ICollector c in collectors)
             c.StartCollecting();
     }
 
@@ -164,7 +147,7 @@ public class DataManager : MonoBehaviour
         writerOn = false;
 
         // Stop all data collectors
-        foreach (Collector c in collectors)
+        foreach (ICollector c in collectors)
             c.StopCollecting();
 
         // Write a result file, first columns

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -8,9 +6,10 @@ using UnityEngine;
 /// Also needs to be linked inside a start button to be activated.
 /// Due to limitations in Unity, this single script offers multiple functionalities.
 /// </summary>
+[Obsolete]
 [RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(DataCollector))]
-public class OAC : MonoBehaviour, ICatcher
+[RequireComponent(typeof(RigidbodyCollector))]
+public class GOACRobot : MonoBehaviour
 {
     [Tooltip("Whether to apply movement contraints to the catcher.")]
     public bool limited;
@@ -96,16 +95,14 @@ public class OAC : MonoBehaviour, ICatcher
 
         // Compute K and H, assuming ball is always launching from (0,yb0,0) and catcher is stationary (and grounded) at first
         float xzVelocity = manager.loadedTestCase.initialVelocityVector.XZ().magnitude;
-        deltaP0 = (manager.baseballHomePosition - manager.catcherStartPosition).magnitude;
+        deltaP0 = (manager.baseballHomePosition - manager.playerStartPosition).magnitude;
 
         K = manager.loadedTestCase.initialVelocityVector.y / manager.baseballHomePosition.y // divided by yb0 = 1
             -
             xzVelocity / deltaP0;
 
-        H = manager.loadedTestCase.initialVelocityVector.z / manager.catcherStartPosition.x;
-
-        // Start
-        manager.catcher = this;
+        H = manager.loadedTestCase.initialVelocityVector.z / manager.playerStartPosition.x;
+        
         startingTime = Time.time + manager.pauseBetweenTrials;
         StartCoroutine(manager.StartTrial(TestCase.TrialType.Robot));
     }
@@ -160,13 +157,13 @@ public class OAC : MonoBehaviour, ICatcher
 
     public void StartDataCollector()
     {
-        gameObject.GetComponent<DataCollector>().enabled = true;
+        gameObject.GetComponent<RigidbodyCollector>().enabled = true;
     }
 
     public void StopDataCollector()
     {
 
-        gameObject.GetComponent<DataCollector>().enabled = false;
+        gameObject.GetComponent<RigidbodyCollector>().enabled = false;
     }
 
     private double deltaP0, K;
@@ -199,7 +196,7 @@ public class OAC : MonoBehaviour, ICatcher
 
         // Now compute the correct X
         result.x = tempBaseballPos.x - tempBaseballPos.y *
-            (manager.baseballHomePosition.x - manager.catcherStartPosition.x) /
+            (manager.baseballHomePosition.x - manager.playerStartPosition.x) /
             (manager.baseballHomePosition.y * (1 + (float)K * (Time.time - startingTime)));
 
         // And rotate that around the Y axis into the flight plane of the ball

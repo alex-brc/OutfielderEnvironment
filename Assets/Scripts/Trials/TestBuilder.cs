@@ -94,7 +94,7 @@ public class TestBuilder : MonoBehaviour
             foreach (TestCase test in manager.TestCases)
             {
                 // Find all targets relative to catcher pos
-                Vector3 relativeTarget = test.target - manager.catcherStartPosition; 
+                Vector3 relativeTarget = test.target - manager.playerStartPosition; 
                 relativeTargets.Add(relativeTarget);
                 // Find the range of the targets
                 Vector3 pos = new Vector3(-relativeTarget.x, -relativeTarget.z);
@@ -137,10 +137,10 @@ public class TestBuilder : MonoBehaviour
         }
 
         // Position markers
-        cPos.text = "(" + manager.catcherStartPosition.x.ToString("0.##") + ",0)";
+        cPos.text = "(" + manager.playerStartPosition.x.ToString("0.##") + ",0)";
         bPos.text = "(0,0)";
         // Range markers
-        float temp =  manager.catcherStartPosition.x + targetDisplay.rect.width / scalingFactor / 2;
+        float temp =  manager.playerStartPosition.x + targetDisplay.rect.width / scalingFactor / 2;
         xRange.text = "range(x) = (" + temp.ToString("0.##") + ",0)";
         temp = targetDisplay.rect.height / scalingFactor / 2;
         zRange.text = "range(z) = (" + (-temp).ToString("0.##") + "," + temp.ToString("0.##") + ")";
@@ -162,7 +162,7 @@ public class TestBuilder : MonoBehaviour
     {
         List<TestCase> tests = new List<TestCase>();
         foreach(Vector3 target in relativeTargets)
-            tests.Add(new TestCase(target + manager.catcherStartPosition, confManager.maxBallHeight, tests.Count));
+            tests.Add(new TestCase(target + manager.playerStartPosition, confManager.maxBallHeight, tests.Count));
         return tests;
     }
 }

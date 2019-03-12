@@ -164,7 +164,7 @@ public class ConfigurationManager : MonoBehaviour
         manager.practiceRuns = practiceRuns;
         manager.trialRuns = trialRuns;
         manager.pauseBetweenTrials = pauseBetweenTrials;
-        manager.catcherStartPosition = new Vector3(startingDistance, 0, 0);
+        manager.playerStartPosition = new Vector3(startingDistance, 0, 0);
         player.maximumSpeed = maxSpeed;
         
         // Set ball

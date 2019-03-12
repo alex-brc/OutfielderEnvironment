@@ -17,13 +17,14 @@ public class LastResult : MonoBehaviour
         total = 0;
     }
 
-    public void UpdateResult(bool caught)
+    public void UpdateResult(bool caught, TestCase.TrialType type)
     {
         if (caught)
         {
             background.color = CustomColors.SoftGreen;
             text.text = "CATCH";
-            total++;
+            if (type == TestCase.TrialType.Trial)
+                total++;
         }
         else
         {

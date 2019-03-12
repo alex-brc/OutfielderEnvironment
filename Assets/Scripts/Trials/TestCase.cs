@@ -4,12 +4,13 @@ using UnityEngine.UI;
 using UnityEngine;
 
 [System.Serializable]
-public class TestCase : System.Object
+public class TestCase
 {
     public enum TrialType { Practice, Trial, Robot };
     public enum BuildType { Target, InitialVelocity, InitialParameters };
 
     internal BuildType buildType;
+    internal float duration;
     internal int testNumber;
     internal Vector3 target;
     internal float height;
@@ -35,6 +36,8 @@ public class TestCase : System.Object
         float t =  (velocityVector.y + Mathf.Sqrt(velocityVector.y * velocityVector.y + 2 * Physics.gravity.y))/ (-1 * Physics.gravity.y);
         velocityVector.x = target.x / t;
         velocityVector.z = target.z / t;
+
+        duration = t;
 
         initialVelocityVector = velocityVector;
 
@@ -65,6 +68,9 @@ public class TestCase : System.Object
         // Compute target
         target = new Vector3();
         float t = (initialVelocityVector.y + Mathf.Sqrt(initialVelocityVector.y * initialVelocityVector.y + 2 * Physics.gravity.y)) / (-1 * Physics.gravity.y);
+
+        duration = t;
+
         target.x = t * initialVelocityVector.x;
         target.z = t * initialVelocityVector.z;
         height = initialVelocityVector.y * initialVelocityVector.y / 2 * Physics.gravity.y + 1; // +1 since the ball starts at (0,1,0)
@@ -88,6 +94,9 @@ public class TestCase : System.Object
         // Compute target
         Vector3 target = new Vector3();
         float t = (initialVelocityVector.y + Mathf.Sqrt(initialVelocityVector.y * initialVelocityVector.y + 2 * Physics.gravity.y)) / (-1 * Physics.gravity.y);
+
+        duration = t;
+
         target.x = t * initialVelocityVector.x;
         target.z = t * initialVelocityVector.z;
         height = initialVelocityVector.y * initialVelocityVector.y / 2 * Physics.gravity.y + 1; // +1 since the ball starts at (0,1,0)

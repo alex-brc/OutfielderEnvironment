@@ -17,15 +17,21 @@ public class TrialsManager : MonoBehaviour
     public int practiceRuns = 2;
 
     [Header("Positions")]
-    public Vector3 catcherStartPosition;
+    public Vector3 playerStartPosition;
     public Vector3 baseballHomePosition;
 
     [Header("Miscellaneous")]
     public float pauseBetweenTrials;
 
+    [Header("Strategies")]
+    public GOAC GOACObject;
+    public LOT LOTObject;
+
     [Header("References")]
-    public GameObject baseball;
     public UnityEngine.UI.Text infoBox;
+    public Rigidbody ballRb;
+    public Rigidbody playerRb;
+    public PlayerController player;
     public GameObject UI;
     public GameObject overlay;
     public DataManager dataWriter;
@@ -35,7 +41,7 @@ public class TrialsManager : MonoBehaviour
 
     internal TestCase loadedTestCase;
     private TestCase[] testCases;
-    internal ICatcher catcher;
+    internal LinkedList<IStrategy> strategies;
     internal TrialStatus trialStatus = TrialStatus.Ready;
     internal float startingTime = 0;
     internal float startingFrame = 0;
@@ -58,14 +64,24 @@ public class TrialsManager : MonoBehaviour
 
     void Start()
     {
-        baseball.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeAll;
+        ballRb.constraints = RigidbodyConstraints.FreezeAll;
+        strategies = new LinkedList<IStrategy>();
+        strategies.AddLast(GOACObject);
+        strategies.AddLast(LOTObject);
     }
 
     void FixedUpdate()
     {
         if (trialStatus == TrialStatus.TrialInProgress)
         {
-            catcher.Move();
+            // Move player
+            player.Move();
+            // Predict the correct position via different strategies
+            foreach (IStrategy strat in strategies)
+            {
+                if (strat.IsReady())
+                    strat.UpdatePrediction(Time.time - startingTime, ballRb.GetComponent<Rigidbody>());
+            }
         }
     }
 
@@ -79,11 +95,11 @@ public class TrialsManager : MonoBehaviour
         }
         // Update status
         trialStatus = TrialStatus.CountingDown;
-        
+
         // Bring catcher to field
-        catcher.GetRigidbody().position = catcherStartPosition;
-        catcher.GetRigidbody().transform.eulerAngles = new Vector3(0, -90, 0);
-        Debug.Log("Starting trial");
+        playerRb.position = playerStartPosition;
+        playerRb.transform.eulerAngles = new Vector3(0, -90, 0);
+
         // Update counter color
         infoBox.color = CustomColors.Black;
 
@@ -91,10 +107,13 @@ public class TrialsManager : MonoBehaviour
         float currCountdownValue = pauseBetweenTrials;
         while (currCountdownValue > 0)
         {
-            infoBox.text = "Starting in " + currCountdownValue.ToString("#") + "...";
+            infoBox.text = "Starting in " + currCountdownValue.ToString("0.0") + "...";
             yield return new WaitForSeconds(0.01f);
             currCountdownValue -= 0.01f;
         }
+
+        // Set null position for controller
+        player.SetZeroPosition();
 
         if (type == TestCase.TrialType.Trial)
             infoBox.text = "Trial running";
@@ -103,16 +122,20 @@ public class TrialsManager : MonoBehaviour
 
         // Update status
         trialStatus = TrialStatus.TrialInProgress;
-        
+
+        // Initialise the strategies
+        foreach (IStrategy strat in strategies)
+            StartCoroutine(StrategyInitialiser(strat));
+
         // Start the data writer
         dataWriter.StartNewTest(loadedTestCase.testNumber, type);
 
         startingTime = Time.time;
         startingFrame = Time.frameCount;
-        
+
         // Apply the velocity specified and unlock the ball
-        baseball.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
-        baseball.GetComponent<Rigidbody>().velocity = loadedTestCase.initialVelocityVector;
+        ballRb.constraints = RigidbodyConstraints.None;
+        ballRb.velocity = loadedTestCase.initialVelocityVector;
     }
 
     internal void CompleteTrial(bool caught)
@@ -124,17 +147,33 @@ public class TrialsManager : MonoBehaviour
         // Cleanup
         UnloadTest();
         // Send catcher home
-        catcher.SendHome();
+        player.SendHome();
         // Bring the ball to its place
-        baseball.GetComponent<Rigidbody>().velocity = Vector3.zero;
-        baseball.transform.position = baseballHomePosition;
+        ballRb.velocity = Vector3.zero;
+        ballRb.transform.position = baseballHomePosition;
         // Update status
         trialStatus = TrialStatus.Ready;
-        baseball.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeAll;
+        ballRb.constraints = RigidbodyConstraints.FreezeAll;
         // Stop writer
         dataWriter.CompleteTest(caught);
+        // Stop strategies
+        foreach (IStrategy strat in strategies)
+        {
+            strat.Terminate();
+        }
     }
-    
+
+    private IEnumerator StrategyInitialiser(IStrategy strategy)
+    {
+        // Wait for how many seconds it likes 
+        yield return new WaitForSeconds(strategy.TimeToInit());
+
+        // Initialise the strat
+        strategy.Initialise(ballRb, playerRb);
+
+        yield return 0;
+    }
+
     internal void LoadTest(TestCase testCase)
     {
         this.loadedTestCase = testCase;

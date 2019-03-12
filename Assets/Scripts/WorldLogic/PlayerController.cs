@@ -3,16 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-[RequireComponent(typeof(DataCollector))]
+[RequireComponent(typeof(RigidbodyCollector))]
 [RequireComponent(typeof(Rigidbody))]
-public class PlayerController : MonoBehaviour, ICatcher
+public class PlayerController : MonoBehaviour
 {
-    public enum Controller { WiiBoard, FOVE }
+    public enum Controller { WiiBoard, Joystick }
 
     public Controller controllerType;
     public float maximumSpeed = 7;
     public Vector3 homePosition;
-    
+    public PathDisplay path;
+
     [Header("References")]
     public TrialsManager manager;
     public GameObject fove;
@@ -46,7 +47,7 @@ public class PlayerController : MonoBehaviour, ICatcher
         if (!calibrating)
         {
             SetZeroPosition();
-            manager.catcher = this;
+            manager.player = this;
             StartCoroutine(manager.StartTrial(type));
         }
     }
@@ -71,7 +72,7 @@ public class PlayerController : MonoBehaviour, ICatcher
     public void Move()
     {
         float modifier = 1;
-        if (controllerType == Controller.FOVE)
+        if (controllerType == Controller.Joystick)
         {
             // Raw motion vector
             motionVector = GetFOVEInput() - zeroPosition;
@@ -99,7 +100,7 @@ public class PlayerController : MonoBehaviour, ICatcher
             velocityVector = Quaternion.Euler(0, -90, 0) * velocityVector;
 
             // Linear map
-            rigidbody.velocity = modifier * velocityVector * maximumSpeed;
+            // rigidbody.velocity = modifier * velocityVector * maximumSpeed;
         }
         else if(controllerType == Controller.WiiBoard)
         {
@@ -114,9 +115,10 @@ public class PlayerController : MonoBehaviour, ICatcher
             // rigidbody.AddForce(modifier * velocityVector * maximumSpeed / 2, ForceMode.Acceleration);
             
             // Linear map
-            rigidbody.velocity = modifier * velocityVector * maximumSpeed;
+            // rigidbody.velocity = modifier * velocityVector * maximumSpeed;
         }
-
+        // Add current position to path
+        path.UpdateLine(transform.position);
     }
 
     public void SendHome()
@@ -133,13 +135,13 @@ public class PlayerController : MonoBehaviour, ICatcher
 
     public void StartDataCollector()
     {
-        gameObject.GetComponent<DataCollector>().enabled = true;
+        gameObject.GetComponent<RigidbodyCollector>().enabled = true;
     }
 
     public void StopDataCollector()
     {
 
-        gameObject.GetComponent<DataCollector>().enabled = false;
+        gameObject.GetComponent<RigidbodyCollector>().enabled = false;
     }
 
     internal void ClearCalibration()

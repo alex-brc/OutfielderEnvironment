@@ -7,7 +7,8 @@ using UnityEngine;
 /// <summary>
 /// Collects data from the object it's attached to during a trial/practice.
 /// </summary>
-public class DataCollector : MonoBehaviour, Collector
+[RequireComponent(typeof(Rigidbody))]
+public class RigidbodyCollector : MonoBehaviour, ICollector
 {
     public string fileName;
 
@@ -40,7 +41,7 @@ public class DataCollector : MonoBehaviour, Collector
         startingTime = Time.time;
         
         stringBuilder = new StringBuilder();
-        writerCoroutine = StartCoroutine(DataManager.WriterRoutine(dataManager, fullFileName, stringBuilder));
+        writerCoroutine = StartCoroutine(WriterRoutine(fullFileName));
     }
 
     public void StopCollecting()
@@ -62,7 +63,24 @@ public class DataCollector : MonoBehaviour, Collector
         // Make those values into a comma separated line
         return DataManager.ToCSVLine(vals);
     }
-    
+
+    // Writing operations are performed once every 
+    // writeInterval seconds so as to avoid writing 
+    // to file on every frame.
+    private IEnumerator WriterRoutine(string fileName)
+    {
+        do
+        {
+            // Write contents of stringbuilder to file
+            string output = stringBuilder.ToString();
+            stringBuilder = new StringBuilder();
+            File.AppendAllText(fileName, output);
+            // Wait for writeInterval seconds before writing again.
+            yield return new WaitForSeconds(dataManager.writeInterval);
+        }
+        while (dataManager.Running());
+    }
+
     void FixedUpdate()
     {
         // If the writer is off don't write anything. 
