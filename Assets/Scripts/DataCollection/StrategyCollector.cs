@@ -8,88 +8,54 @@ using UnityEngine;
 /// Collects data from the object it's attached to during a trial/practice.
 /// </summary>
 [RequireComponent(typeof(IStrategy))]
-public class StrategyCollector : MonoBehaviour, ICollector
+public class StrategyCollector : Collector
 {
-    public string fileName;
     public PathDisplay path;
-
-    [Header("References")]
-    public DataManager dataManager;
-
     private IStrategy strategy;
-    private StringBuilder stringBuilder;
-    private Coroutine writerCoroutine;
-    private float startingFrame, startingTime;
     private bool first;
-
-    private void Start()
+    
+    public override string GetColumns()
     {
-        // Give this to the manager
-        dataManager.collectors.Add(this);
-        strategy = gameObject.GetComponent<IStrategy>();
+        return 
+            "Time,Frame," +
+            "Position_X,Position_Y,Position_Z\r\n";
+    }
+
+    public override object[] GetData()
+    {
+        return new object[] {
+            (Time.time - startingTime),
+            (Time.frameCount - startingFrame),
+            strategy.GetPrediction().ToCSVFormat()
+            };
+    }
+    
+    new void Start()
+    {
+        base.Start();
+
+        // Grab strategy
+        strategy = GetComponent<IStrategy>();
         first = false;
     }
 
-    public void StartCollecting()
+    new public void StartCollecting()
     {
-        // Make the file
-        string fullFileName = dataManager.testPath + "\\" + fileName;
-        // Write the columns
-        string output =
-            "Time,Frame," +
-            "Position_X,Position_Y,Position_Z\r\n";
-        File.WriteAllText(fullFileName, output);
-
-        startingFrame = Time.frameCount;
-        startingTime = Time.time;
+        base.StartCollecting();
 
         // Clear the strategy path display
         path.Clear();
-
-        stringBuilder = new StringBuilder();
-        writerCoroutine = StartCoroutine(WriterRoutine(fullFileName));
     }
 
-    public void StopCollecting()
+    new public void StopCollecting()
     {
-        // Dump the stringbuilder
-        File.AppendAllText(fileName, stringBuilder.ToString());
-        stringBuilder = new StringBuilder();
+        base.StopCollecting();
 
         // Skip one write on the next trial
         first = true;
     }
 
-    private string Record()
-    {
-        object[] vals = {
-            (Time.time - startingTime),
-            (Time.frameCount - startingFrame),
-            strategy.GetPrediction().ToCSVFormat()
-            };
-
-        // Make those values into a comma separated line
-        return DataManager.ToCSVLine(vals);
-    }
-
-    // Writing operations are performed once every 
-    // writeInterval seconds so as to avoid writing 
-    // to file on every frame.
-    private IEnumerator WriterRoutine(string fileName)
-    {
-        do
-        {
-            // Write contents of stringbuilder to file
-            string output = stringBuilder.ToString();
-            stringBuilder = new StringBuilder();
-            File.AppendAllText(fileName, output);
-            // Wait for writeInterval seconds before writing again.
-            yield return new WaitForSeconds(dataManager.writeInterval);
-        }
-        while (dataManager.Running());
-    }
-
-    void FixedUpdate()
+    new void FixedUpdate()
     {
         // If the writer is off don't write anything. 
         // This is only a thing inside the editor for testing purposes.

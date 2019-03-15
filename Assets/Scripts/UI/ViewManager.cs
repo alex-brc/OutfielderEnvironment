@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class ViewManager : MonoBehaviour
 {
+    private const float P_X = 2f / 3f;
+    private const float P_Y = 5f / 6f;
+    private const float P_Z = 2f / 3f;
+
     private int STATE = 0;
 
     public KeyCode view1 = KeyCode.Alpha1;
@@ -11,7 +15,7 @@ public class ViewManager : MonoBehaviour
     public KeyCode view3 = KeyCode.Alpha3;
 
     [Header("References")]
-    public Canvas UI;
+    public CanvasGroup UI;
     public Camera UICamera;
     public Camera playerCamera; 
 
@@ -20,24 +24,33 @@ public class ViewManager : MonoBehaviour
     {
         if (Input.GetKeyUp(view1)) // Menu/UI view
         {
-            UI.enabled = true;
+            UIManager.Show(UI);
             
             playerCamera.enabled = false;
             UICamera.enabled = true;
         }
         else if (Input.GetKeyUp(view2)) // Overview camera
         {
-            UI.enabled = false;
+            UIManager.Hide(UI);
 
             playerCamera.enabled = false;
             UICamera.enabled = true;
         }
         else if (Input.GetKeyUp(view3)) // Player camera
         {
-            UI.enabled = false;
+            UIManager.Hide(UI);
 
             playerCamera.enabled = true;
             UICamera.enabled = false;
         }
+    }
+
+    public void Refresh(float distance)
+    {
+        // Move camera depending on the starting distance
+        // this transform
+        transform.position = new Vector3(distance * P_X, distance * P_Y, distance * P_Z);
+
+
     }
 }

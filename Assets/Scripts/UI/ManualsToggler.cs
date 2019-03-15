@@ -8,7 +8,7 @@ public class ManualsToggler : MonoBehaviour
 {
     [Header("References")]
     public GameObject[] manualButtons;
-    public Button[] autoButtons;
+    public Button startButton;
 
     private Toggle toggler;
     void Start()
@@ -16,29 +16,23 @@ public class ManualsToggler : MonoBehaviour
         toggler = transform.GetComponent<Toggle>();
         // Turn it off on start if it isn't
         toggler.isOn = false;
-        ToggleValueChanged(false);
+        foreach (GameObject button in manualButtons)
+        {
+            button.SetActive(false);
+            button.GetComponent<Button>().interactable = false;
+        }
     }
 
     public void ToggleValueChanged(bool on)
     {
         if (on)
-        {
             foreach (GameObject button in manualButtons)
             {
                 button.SetActive(true);
                 button.GetComponent<Button>().interactable = true;
             }
-
-            foreach (Button button in autoButtons)
-                button.interactable = false;
-        }
         else
-        {
             foreach (GameObject button in manualButtons)
                 button.SetActive(false);
-
-            foreach (Button button in autoButtons)
-                button.interactable = true;
-        }
     }
 }

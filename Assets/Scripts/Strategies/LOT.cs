@@ -43,18 +43,18 @@ public class LOT : MonoBehaviour, IStrategy
         // The resulting numbers are relative to the ball position. 
         // We will add this to the ball position to get the catcher position.
         Vector3 ballToPoint = new Vector3();
-
+        
         // The correct alpha angle can be achieved from any point 
         // that lies on a circle of a specific radius around the ball.
         // This radius is:
-        float r = a + T * t;
+        float r = ballPosition.y / (a + T * t);
 
         // The correct delta angle, in contrast, can be achieved from
         // any point that lies on a certain line (on which the ball also
         // lies). The vector along that line, from the ball to the correct
-        // point is ballToPoint.
-        // Adjust T with a sign for when the ball's initial Z velocity < 0
-        float dTt = (d + Mathf.Sign(d) * T * t);
+        // point is ballToPoint. Adjust T with a sign for when the ball's 
+        // initial Z velocity < 0
+        float dTt = (d + d * T * t);
         ballToPoint.x = r / Mathf.Sqrt(dTt * dTt + 1);
         ballToPoint.z = ballToPoint.x * dTt;
 

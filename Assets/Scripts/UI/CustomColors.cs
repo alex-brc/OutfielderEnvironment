@@ -4,6 +4,7 @@ using UnityEngine;
 
 public static class CustomColors
 {
+    
     public static readonly Color 
         Green = new Color(108 / 255.0f, 247 / 255.0f, 86 / 255.0f),
         SoftGreen = new Color(124 / 255.0f, 255 / 255.0f, 112 / 255.0f),

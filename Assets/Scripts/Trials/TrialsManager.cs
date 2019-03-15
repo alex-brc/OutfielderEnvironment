@@ -7,21 +7,14 @@ using UnityEngine;
 public class TrialsManager : MonoBehaviour
 {
     public enum TrialStatus { Ready, CountingDown, TrialInProgress }
-
-    [Header("Test case options")]
-    public Vector3 firstTestPosition;
-    public float verticalOffset;
-    public float maximumBallHeight = 20;
-    public float distanceToTargets = 4;
-    public int trialRuns = 5;
-    public int practiceRuns = 2;
+    
+    public Configurable<int> trialRuns = new Configurable<int>();
+    public Configurable<int> practiceRuns = new Configurable<int>();
+    public Configurable<float> startingDistance = new Configurable<float>();
+    public Configurable<float> pauseBetweenTrials = new Configurable<float>();
 
     [Header("Positions")]
-    public Vector3 playerStartPosition;
     public Vector3 baseballHomePosition;
-
-    [Header("Miscellaneous")]
-    public float pauseBetweenTrials;
 
     [Header("Strategies")]
     public GOAC GOACObject;
@@ -32,13 +25,16 @@ public class TrialsManager : MonoBehaviour
     public Rigidbody ballRb;
     public Rigidbody playerRb;
     public PlayerController player;
+    public BallController ball;
     public GameObject UI;
     public GameObject overlay;
     public DataManager dataWriter;
     public FoveInterface fove;
     public TestBuilder builder;
     public ConfigurationManager confManager;
+    public ViewManager viewManager;
 
+    internal Vector3 playerStartPosition;
     internal TestCase loadedTestCase;
     private TestCase[] testCases;
     internal LinkedList<IStrategy> strategies;
@@ -70,6 +66,13 @@ public class TrialsManager : MonoBehaviour
         strategies.AddLast(LOTObject);
     }
 
+    internal void Refresh()
+    {
+        // Set catcher position
+        playerStartPosition = new Vector3(startingDistance.Get(), 0, 0);
+        viewManager.Refresh(startingDistance.Get());
+    }
+
     void FixedUpdate()
     {
         if (trialStatus == TrialStatus.TrialInProgress)
@@ -93,6 +96,7 @@ public class TrialsManager : MonoBehaviour
             infoBox.text = "No test loaded";
             yield break;
         }
+
         // Update status
         trialStatus = TrialStatus.CountingDown;
 
@@ -104,7 +108,7 @@ public class TrialsManager : MonoBehaviour
         infoBox.color = CustomColors.Black;
 
         // Countdown
-        float currCountdownValue = pauseBetweenTrials;
+        float currCountdownValue = pauseBetweenTrials.Get();
         while (currCountdownValue > 0)
         {
             infoBox.text = "Starting in " + currCountdownValue.ToString("0.0") + "...";

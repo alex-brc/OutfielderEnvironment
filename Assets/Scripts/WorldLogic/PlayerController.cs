@@ -1,16 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using UnityEngine;
 
 [RequireComponent(typeof(RigidbodyCollector))]
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
 {
-    public enum Controller { WiiBoard, Joystick }
+    public enum Controller { Joystick, Fove }
 
     public Controller controllerType;
-    public float maximumSpeed = 7;
+    public Configurable<float> maximumSpeed = new Configurable<float>();
     public Vector3 homePosition;
     public PathDisplay path;
 
@@ -20,10 +17,10 @@ public class PlayerController : MonoBehaviour
 
     internal Vector3 motionVector;
     internal Vector3 velocityVector;
-    internal bool calibrating = false;
-    internal bool calibrated = false;
 
     private new Rigidbody rigidbody;
+    internal bool calibrating = false;
+    internal bool calibrated = false;
     private Vector3 minimumLean, maximumLean, zeroPosition;
 
     void Start() {
@@ -72,7 +69,7 @@ public class PlayerController : MonoBehaviour
     public void Move()
     {
         float modifier = 1;
-        if (controllerType == Controller.Joystick)
+        if (controllerType == Controller.Fove)
         {
             // Raw motion vector
             motionVector = GetFOVEInput() - zeroPosition;
@@ -100,9 +97,9 @@ public class PlayerController : MonoBehaviour
             velocityVector = Quaternion.Euler(0, -90, 0) * velocityVector;
 
             // Linear map
-            // rigidbody.velocity = modifier * velocityVector * maximumSpeed;
+            // rigidbody.velocity = modifier * velocityVector * maximumSpeed.Get();
         }
-        else if(controllerType == Controller.WiiBoard)
+        else if(controllerType == Controller.Joystick)
         {
             // This is already filtered by the app
             velocityVector = GetWiiBoardInput();
@@ -112,10 +109,10 @@ public class PlayerController : MonoBehaviour
             modifier = (1 - Mathf.Cos(modifier)) / 2;
 
             // Apply force
-            // rigidbody.AddForce(modifier * velocityVector * maximumSpeed / 2, ForceMode.Acceleration);
-            
+            // rigidbody.AddForce(modifier * velocityVector * maximumSpeed.Get() / 2, ForceMode.Acceleration);
+
             // Linear map
-            // rigidbody.velocity = modifier * velocityVector * maximumSpeed;
+            // rigidbody.velocity = modifier * velocityVector * maximumSpeed.Get();
         }
         // Add current position to path
         path.UpdateLine(transform.position);

@@ -21,7 +21,7 @@ public class DataManager : MonoBehaviour
     public FoveInterface fove;
     
     internal string testPath;
-    internal List<ICollector> collectors;
+    internal List<Collector> collectors;
     
     private string dataPath;
     private long startingFrame;
@@ -31,7 +31,7 @@ public class DataManager : MonoBehaviour
     public void Awake()
     {
         // Init workers list
-        collectors = new List<ICollector>();
+        collectors = new List<Collector>();
     }
 
     public static string ToCSVLine(object[] vals)
@@ -138,7 +138,7 @@ public class DataManager : MonoBehaviour
         writerOn = true;
 
         // Start all data collectors
-        foreach (ICollector c in collectors)
+        foreach (Collector c in collectors)
             c.StartCollecting();
     }
 
@@ -147,7 +147,7 @@ public class DataManager : MonoBehaviour
         writerOn = false;
 
         // Stop all data collectors
-        foreach (ICollector c in collectors)
+        foreach (Collector c in collectors)
             c.StopCollecting();
 
         // Write a result file, first columns

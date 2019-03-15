@@ -8,87 +8,26 @@ using UnityEngine;
 /// Collects data from the object it's attached to during a trial/practice.
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
-public class RigidbodyCollector : MonoBehaviour, ICollector
+public class RigidbodyCollector : Collector
 {
-    public string fileName;
-
-    [Header("References")]
-    public DataManager dataManager;
-
-    private StringBuilder stringBuilder;
-    private Coroutine writerCoroutine;
-    private float startingFrame, startingTime;
-
-    private void Start()
+    public override string GetColumns()
     {
-        // Give this to the manager
-        dataManager.collectors.Add(this);
-    }
-
-    public void StartCollecting()
-    {
-        // Make the file
-        string fullFileName = dataManager.testPath + "\\" + fileName;
-        // Write the columns
-        string output =
+        return 
             "Time,Frame," +
             "Position_X,Position_Y,Position_Z," +
             "Rotation_X,Rotation_Y,Rotation_Z," +
+            "ForwardVector_X,ForwardVector_Y,ForwardVector_Z," +
             "Velocity_X,Velocity_Y,Velocity_Z\r\n";
-        File.WriteAllText(fullFileName, output);
-
-        startingFrame = Time.frameCount;
-        startingTime = Time.time;
-        
-        stringBuilder = new StringBuilder();
-        writerCoroutine = StartCoroutine(WriterRoutine(fullFileName));
     }
 
-    public void StopCollecting()
+    public override object[] GetData()
     {
-        // Dump the stringbuilder
-        File.AppendAllText(fileName, stringBuilder.ToString());
-        stringBuilder = new StringBuilder();
-    }
-
-    private string Record()
-    {
-        object[] vals = {
+        return new object[] {
             (Time.time - startingTime),
             (Time.frameCount - startingFrame),
             gameObject.transform.position.ToCSVFormat(),
             gameObject.transform.rotation.eulerAngles.ToCSVFormat(),
             gameObject.GetComponent<Rigidbody>().velocity.ToCSVFormat()};
-
-        // Make those values into a comma separated line
-        return DataManager.ToCSVLine(vals);
     }
-
-    // Writing operations are performed once every 
-    // writeInterval seconds so as to avoid writing 
-    // to file on every frame.
-    private IEnumerator WriterRoutine(string fileName)
-    {
-        do
-        {
-            // Write contents of stringbuilder to file
-            string output = stringBuilder.ToString();
-            stringBuilder = new StringBuilder();
-            File.AppendAllText(fileName, output);
-            // Wait for writeInterval seconds before writing again.
-            yield return new WaitForSeconds(dataManager.writeInterval);
-        }
-        while (dataManager.Running());
-    }
-
-    void FixedUpdate()
-    {
-        // If the writer is off don't write anything. 
-        // This is only a thing inside the editor for testing purposes.
-        if (!dataManager.isActive())
-            return;
-        
-        if (dataManager.Running())
-            stringBuilder.Append(Record());
-    }
+    
 }

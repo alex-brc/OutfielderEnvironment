@@ -4,12 +4,12 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(TrialsManager))]
 public class AutoTrialRunner : MonoBehaviour
 {
     private enum Status { Stopped, Paused, Running, Finished }
 
     [Header("References")]
+    public TrialsManager manager;
     public PlayerController player;
     public Text statusBox;
     public ProgressBar progressBar;
@@ -22,7 +22,6 @@ public class AutoTrialRunner : MonoBehaviour
 
     private volatile Status status;
     private Coroutine runner;
-    private TrialsManager manager;
     private int[] trialIndexes;
     private System.Random rand;
     private int currentIndex;
@@ -59,14 +58,12 @@ public class AutoTrialRunner : MonoBehaviour
         }
     }
 
-    private void Start()
+    private void OnEnable()
     {
         stopButton.interactable = false;
         pauseButton.interactable = false;
 
         status = Status.Stopped;
-        statusBox.text = "Ready to start";
-        manager = GetComponent<TrialsManager>();
         rand = new System.Random();
     }
 
@@ -193,15 +190,15 @@ public class AutoTrialRunner : MonoBehaviour
     private void StartExperiment()
     {
         numTests = manager.TestCases.Length;
-        numTrials = manager.trialRuns * numTests;
-        numPractices = manager.practiceRuns * numTests;
+        numTrials = manager.trialRuns.Get() * numTests;
+        numPractices = manager.practiceRuns.Get() * numTests;
 
         trialIndexes = new int[NumTrials + numPractices];
 
         // Fill the testIndexes with trialRuns+practiceRuns copies of each test case index
         for (int i = 0; i < numTests; i++)
-            for (int j = 0; j < (manager.trialRuns + manager.practiceRuns); j++)
-                trialIndexes[i * manager.trialRuns + j] = i;
+            for (int j = 0; j < (manager.trialRuns.Get() + manager.practiceRuns.Get()); j++)
+                trialIndexes[i * manager.trialRuns.Get() + j] = i;
 
         // Shuffle the practices
         int t,r;

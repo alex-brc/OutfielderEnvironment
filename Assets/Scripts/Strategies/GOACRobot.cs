@@ -68,10 +68,6 @@ public class GOACRobot : MonoBehaviour
         radiusDisplay.radius = GetAlphaRadius();
         lineDisplay.pointA = baseballRb.position.XZ();
         lineDisplay.pointB = p;
-        // Log the current (real) delta angle to the delta graph
-        GraphDbg.Log(
-            "DeltaGraph",
-            Vector3.Angle(catcherRb.position - baseballRb.position.XZ() , -Vector3.right) - manager.loadedTestCase.launchDeviation);
 
         // Don't move if we need to skip updates
         if (Time.time - startingTime < timeToSkip)
@@ -103,7 +99,7 @@ public class GOACRobot : MonoBehaviour
 
         H = manager.loadedTestCase.initialVelocityVector.z / manager.playerStartPosition.x;
         
-        startingTime = Time.time + manager.pauseBetweenTrials;
+        startingTime = Time.time + manager.pauseBetweenTrials.Get();
         StartCoroutine(manager.StartTrial(TestCase.TrialType.Robot));
     }
 

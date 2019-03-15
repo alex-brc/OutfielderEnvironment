@@ -4,16 +4,14 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Slider))]
-public class AutoManualToggle : MonoBehaviour
+public class AutoManualToggle : Container
 {
     public InputField configField;
     public Button loadButton;
     public Button saveButton;
-    public BallPresetDropdown presets;
     public Selectable[] settingElements;
     private bool interactable;
     
-
     public bool Interactable
     {
         get
@@ -81,9 +79,16 @@ public class AutoManualToggle : MonoBehaviour
             saveButton.interactable = true;
             foreach (Selectable element in settingElements)
                 element.interactable = true;
-            presets.OnValueChanged();
         }
     }
 
+    public override void SetContent(string content)
+    {
+        SetValue(bool.Parse(content));
+    }
 
+    public override string RetrieveContent()
+    {
+        return GetValue().ToString();
+    }
 }

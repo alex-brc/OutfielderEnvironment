@@ -7,8 +7,8 @@ public class Grapher : MonoBehaviour
     private readonly Vector3 ZERO_POS = new Vector3(-80, +55, 0);
 
     public TrialsManager manager;
-    public float accelerationDisplayMultiplier = 6;
-    public int accelerationSamples = 3;
+    public float accelerationDisplayMultiplier = 20;
+    public int accelerationSamples = 1;
 
     private float maximumTime;
 
@@ -62,9 +62,9 @@ public class Grapher : MonoBehaviour
             maximumTime = manager.loadedTestCase.duration;
 
             // Reset linerenderers
-            deltaGraph.positionCount = 1;
+            deltaGraph.positionCount = 0;
             ddeltaGraph.positionCount = 0;
-            alphaGraph.positionCount = 1;
+            alphaGraph.positionCount = 0;
             dalphaGraph.positionCount = 0;
         }
         else if(trialRunning && manager.trialStatus != TrialsManager.TrialStatus.TrialInProgress)
@@ -84,15 +84,6 @@ public class Grapher : MonoBehaviour
                 deltaGraph.positionCount - 1,
                 ZERO_POS + new Vector3(currentT,
                             currentDelta));
-            // Add new delta acceleration
-            Vector3 previousDelta = deltaGraph.GetPosition(deltaGraph.positionCount - 2);
-            float deltaT = currentT - previousDelta.x;
-            float deltaDelta = currentDelta - previousDelta.y;
-            ddeltaGraph.positionCount++;
-            ddeltaGraph.SetPosition(
-                ddeltaGraph.positionCount - 1,
-                ZERO_POS + new Vector3(currentT,
-                            deltaFilter.Filter(deltaDelta / deltaT) * accelerationDisplayMultiplier));
 
             // Add new alpha angle
             float currentAlpha = Vector3.Angle(baseballRb.position.XZ() - catcherRb.position,
@@ -103,7 +94,21 @@ public class Grapher : MonoBehaviour
                 ZERO_POS + new Vector3(currentT,
                             currentAlpha));
 
-            // Add new delta alpha
+            // If first position, skip acceleration
+            if (alphaGraph.positionCount == 1)
+                return;
+
+            // Add new delta acceleration
+            Vector3 previousDelta = deltaGraph.GetPosition(deltaGraph.positionCount - 2);
+            float deltaT = currentT - previousDelta.x;
+            float deltaDelta = currentDelta - previousDelta.y;
+            ddeltaGraph.positionCount++;
+            ddeltaGraph.SetPosition(
+                ddeltaGraph.positionCount - 1,
+                ZERO_POS + new Vector3(currentT,
+                            deltaFilter.Filter(deltaDelta / deltaT) * accelerationDisplayMultiplier));
+
+            // Add new alpha acceleration
             Vector3 previousAlpha = alphaGraph.GetPosition(alphaGraph.positionCount - 2);
             float deltaAlpha = currentAlpha - previousAlpha.y;
             dalphaGraph.positionCount++;

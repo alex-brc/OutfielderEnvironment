@@ -53,7 +53,8 @@ public class ContentLoader : MonoBehaviour
         }
 
         // Give these to the runner
-        runner.testBackgrounds = testBackgrounds;
+        runner.testBackgrounds 
+            = testBackgrounds;
 
         manager.testsChanged = false;
     }

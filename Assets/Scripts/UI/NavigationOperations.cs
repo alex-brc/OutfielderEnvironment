@@ -6,17 +6,24 @@ using UnityEngine;
 public class NavigationOperations : MonoBehaviour
 {
     [Header("References")]
-    public GameObject setupMenu;
-    public GameObject controlView;
+    public CanvasGroup setupView;
+    public CanvasGroup controllerView;
+    public CanvasGroup experimentView;
 
-    public void GotoSetupView()
+    public void Back()
     {
-        setupMenu.SetActive(true);
-        controlView.SetActive(false);
+        UIManager.Show(setupView);
+        UIManager.Hide(controllerView);
+        UIManager.Hide(experimentView);
     }
-    public void GotoControlView()
+    public void GotoControllerView()
     {
-        setupMenu.SetActive(false);
-        controlView.SetActive(true);
+        UIManager.Show(controllerView);
+        UIManager.Hide(setupView);
+    }
+    public void GotoExperimentView()
+    {
+        UIManager.Show(experimentView);
+        UIManager.Hide(setupView);
     }
 }

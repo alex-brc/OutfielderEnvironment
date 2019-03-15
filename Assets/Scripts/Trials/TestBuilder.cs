@@ -6,6 +6,12 @@ using UnityEngine.UI;
 public class TestBuilder : MonoBehaviour
 {
     public float fillRatio = 0.8f;
+
+    public Configurable<int> targetsShape = new Configurable<int>();
+    public Configurable<int> numberOfTests = new Configurable<int>();
+    public Configurable<float> maxBallHeight = new Configurable<float>();
+    public Configurable<float> radius = new Configurable<float>();
+
     public Text xRange;
     public Text zRange;
     public Text cPos;
@@ -15,38 +21,63 @@ public class TestBuilder : MonoBehaviour
     public RectTransform targetDisplay;
     public GameObject targetPrefab;
     public ConfigurationManager confManager;
+    public DataManager dataManager;
+    public SubjectOperations subjectOp;
     public TrialsManager manager;
+    public Button controlViewButton;
 
     private List<GameObject> marks; 
     private Vector3[] relativeTargets;
     
+    public void ResetTests()
+    {
+        confManager.tests = new List<TestCase>();
+        manager.TestCases = new TestCase[0];
+        ClearUI();
+        controlViewButton.interactable = false;
+    }
+
+    public void BuildTests()
+    {
+        confManager.Refresh();
+
+        if (confManager.auto.Get())
+        {
+            MakeTargets();
+            confManager.tests = GetTests();
+        }
+
+        manager.TestCases = confManager.tests.ToArray();
+        UpdateUI();
+        dataManager.WriteTestsFile(manager.TestCases);
+        if (subjectOp.hasSubject)
+            controlViewButton.interactable = true;
+    }
+
     public void MakeTargets()
     {
         bool ok = true;
-        int targetsShape = confManager.targetsShape;
-        int numberOfTests = confManager.numberOfTests;
-        float radius = confManager.radius;
         
-        if (targetsShape == 0 && numberOfTests % 4 != 0)
+        if (targetsShape == 0 && numberOfTests.Get() % 4 != 0)
         {
-            numberOfTests -= numberOfTests % 4;
+            numberOfTests.Set( numberOfTests.Get() - numberOfTests.Get() % 4);
             confManager.statusText.text = "Number of tests has to be a multiple of 4 for a square shape. Truncated to " + numberOfTests;
             confManager.statusText.color = CustomColors.Black;
             ok = false;
         }
 
-        relativeTargets = new Vector3[numberOfTests];
+        relativeTargets = new Vector3[numberOfTests.Get()];
         if (targetsShape == 0) // Square
         {
             Vector3[] corners =
             {
-                new Vector3( - radius, 0, - radius),
-                new Vector3( - radius, 0, + radius),
-                new Vector3( + radius, 0, + radius),
-                new Vector3( + radius, 0, - radius)
+                new Vector3( - radius.Get(), 0, - radius.Get()),
+                new Vector3( - radius.Get(), 0, + radius.Get()),
+                new Vector3( + radius.Get(), 0, + radius.Get()),
+                new Vector3( + radius.Get(), 0, - radius.Get())
             };
             
-            int k = numberOfTests / 4;
+            int k = numberOfTests.Get() / 4;
             for (int i = 0; i < k; i++)
             {
                 float l = 1.0f * i / k;
@@ -59,11 +90,11 @@ public class TestBuilder : MonoBehaviour
         }
         else // Circle
         {
-            for (int i = 0; i < numberOfTests; ++i)
+            for (int i = 0; i < numberOfTests.Get(); ++i)
             {
-                float theta = (2 * Mathf.PI / numberOfTests) * i;
-                relativeTargets[i].x = Mathf.Cos(theta) * radius;
-                relativeTargets[i].z = Mathf.Sin(theta) * radius;
+                float theta = (2 * Mathf.PI / numberOfTests.Get()) * i;
+                relativeTargets[i].x = Mathf.Cos(theta) * radius.Get();
+                relativeTargets[i].z = Mathf.Sin(theta) * radius.Get();
             }
         }
         if(ok)
@@ -84,7 +115,7 @@ public class TestBuilder : MonoBehaviour
         float scalingFactor = 0;
 
         // If manual, we must make the targets
-        if (!confManager.auto)
+        if (!confManager.auto.Get())
         {
             List<Vector3> relativeTargets = new List<Vector3>();
 
@@ -125,7 +156,7 @@ public class TestBuilder : MonoBehaviour
         else
         {
             // Tests should've been built previously
-            scalingFactor = fillRatio * (targetDisplay.rect.height / 2) / confManager.radius;
+            scalingFactor = fillRatio * (targetDisplay.rect.height / 2) / radius.Get();
         }
 
         foreach (Vector3 target in relativeTargets)
@@ -162,7 +193,7 @@ public class TestBuilder : MonoBehaviour
     {
         List<TestCase> tests = new List<TestCase>();
         foreach(Vector3 target in relativeTargets)
-            tests.Add(new TestCase(target + manager.playerStartPosition, confManager.maxBallHeight, tests.Count));
+            tests.Add(new TestCase(target + manager.playerStartPosition, maxBallHeight.Get(), tests.Count));
         return tests;
     }
 }
