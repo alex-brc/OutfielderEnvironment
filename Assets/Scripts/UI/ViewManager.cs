@@ -50,7 +50,5 @@ public class ViewManager : MonoBehaviour
         // Move camera depending on the starting distance
         // this transform
         transform.position = new Vector3(distance * P_X, distance * P_Y, distance * P_Z);
-
-
     }
 }

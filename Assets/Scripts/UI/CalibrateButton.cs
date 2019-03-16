@@ -7,8 +7,9 @@ using UnityEngine.UI;
 public class CalibrateButton : MonoBehaviour
 {
 
-    public PlayerController playerController;
-    public Button startButton, startPracticeButton;
+    public PlayerController player;
+    public Button startButton;
+    public Text status;
 
     private Button calibrateButton;
     private ColorBlock notCalibratingColors, calibratingColors;
@@ -16,10 +17,10 @@ public class CalibrateButton : MonoBehaviour
     void Start()
     {
         calibrateButton = transform.gameObject.GetComponent<Button>();
+        calibrateButton.interactable = true;
 
         // Disable start buttons while not calibrated
         startButton.interactable = false;
-        startPracticeButton.interactable = false;
 
         notCalibratingColors = calibrateButton.colors;
         calibratingColors = calibrateButton.colors;
@@ -30,22 +31,24 @@ public class CalibrateButton : MonoBehaviour
 
     public void Calibrate()
     {
-        if (!playerController.calibrating)
+        if (!player.controller.calibrating)
         {
-            playerController.calibrating = true;
-            startButton.interactable = false;
-            startPracticeButton.interactable = false;
+            player.controller.calibrating = true;
 
-            playerController.ClearCalibration();
-            playerController.SetZeroPosition();
+            player.controller.ClearCalibration();
+            player.controller.SetZeroPosition();
+
+            status.text = "Calibrating";
 
             calibrateButton.colors = calibratingColors;
         }
         else
         {
-            playerController.calibrating = false;
+            player.controller.calibrating = false;
             startButton.interactable = true;
-            startPracticeButton.interactable = true;
+
+            status.text = "Calibrated";
+            player.controller.calibrated = true;
 
             calibrateButton.colors = notCalibratingColors;
         }

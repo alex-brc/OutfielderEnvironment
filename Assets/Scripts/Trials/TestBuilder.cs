@@ -24,7 +24,8 @@ public class TestBuilder : MonoBehaviour
     public DataManager dataManager;
     public SubjectOperations subjectOp;
     public TrialsManager manager;
-    public Button controlViewButton;
+    public Button experimentViewButton;
+    public Button controllerViewButton;
 
     private List<GameObject> marks; 
     private Vector3[] relativeTargets;
@@ -34,7 +35,8 @@ public class TestBuilder : MonoBehaviour
         confManager.tests = new List<TestCase>();
         manager.TestCases = new TestCase[0];
         ClearUI();
-        controlViewButton.interactable = false;
+        experimentViewButton.interactable = false;
+        controllerViewButton.interactable = false;
     }
 
     public void BuildTests()
@@ -43,7 +45,8 @@ public class TestBuilder : MonoBehaviour
 
         if (confManager.auto.Get())
         {
-            MakeTargets();
+            if (!MakeTargets())
+                return;
             confManager.tests = GetTests();
         }
 
@@ -51,19 +54,25 @@ public class TestBuilder : MonoBehaviour
         UpdateUI();
         dataManager.WriteTestsFile(manager.TestCases);
         if (subjectOp.hasSubject)
-            controlViewButton.interactable = true;
+        {
+            experimentViewButton.interactable = true;
+            controllerViewButton.interactable = true;
+        }
     }
 
-    public void MakeTargets()
+    public bool MakeTargets()
     {
-        bool ok = true;
-        
+        if (numberOfTests == 0)
+        {
+            confManager.statusText.text = "Number of tests cannot be 0.";
+            confManager.statusText.color = CustomColors.Black;
+            return false;
+        }
         if (targetsShape == 0 && numberOfTests.Get() % 4 != 0)
         {
-            numberOfTests.Set( numberOfTests.Get() - numberOfTests.Get() % 4);
-            confManager.statusText.text = "Number of tests has to be a multiple of 4 for a square shape. Truncated to " + numberOfTests;
+            confManager.statusText.text = "Number of tests has to be a multiple of 4 for a square shape.";
             confManager.statusText.color = CustomColors.Black;
-            ok = false;
+            return false;
         }
 
         relativeTargets = new Vector3[numberOfTests.Get()];
@@ -97,11 +106,10 @@ public class TestBuilder : MonoBehaviour
                 relativeTargets[i].z = Mathf.Sin(theta) * radius.Get();
             }
         }
-        if(ok)
-        {
-            confManager.statusText.text = "Tests built succesfully.";
-            confManager.statusText.color = CustomColors.Black;
-        }
+
+        confManager.statusText.text = "Tests built succesfully.";
+        confManager.statusText.color = CustomColors.Black;
+        return true;
     }
 
     public void UpdateUI()

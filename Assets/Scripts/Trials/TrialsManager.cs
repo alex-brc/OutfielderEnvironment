@@ -70,6 +70,7 @@ public class TrialsManager : MonoBehaviour
     {
         // Set catcher position
         playerStartPosition = new Vector3(startingDistance.Get(), 0, 0);
+        // Refresh UI camera distance
         viewManager.Refresh(startingDistance.Get());
     }
 
@@ -117,7 +118,7 @@ public class TrialsManager : MonoBehaviour
         }
 
         // Set null position for controller
-        player.SetZeroPosition();
+        player.controller.SetZeroPosition();
 
         if (type == TestCase.TrialType.Trial)
             infoBox.text = "Trial running";

@@ -7,8 +7,14 @@ class FoveInitialiser : MonoBehaviour
 {
     public Button startExperimentButton;
     public Text status;
-    
-    void Start()
+    public Text controlStatus;
+
+    public void Start()
+    {
+        StartCoroutine(Init());
+    }
+
+    public void StartCalibrating()
     {
         StartCoroutine(Init());
     }

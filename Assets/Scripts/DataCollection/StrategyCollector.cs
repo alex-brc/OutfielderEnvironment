@@ -36,15 +36,12 @@ public class StrategyCollector : Collector
 
         // Grab strategy
         strategy = GetComponent<IStrategy>();
-        first = false;
+        first = true;
     }
 
     new public void StartCollecting()
     {
         base.StartCollecting();
-
-        // Clear the strategy path display
-        path.Clear();
     }
 
     new public void StopCollecting()
@@ -53,6 +50,8 @@ public class StrategyCollector : Collector
 
         // Skip one write on the next trial
         first = true;
+        // Clear the strategy path display
+        path.Clear();
     }
 
     new void FixedUpdate()

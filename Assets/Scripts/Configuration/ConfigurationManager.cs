@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,6 +17,7 @@ public class ConfigurationManager : MonoBehaviour
     public UIManager uiManager;
     public PlayerController player;
     public BallController ball;
+    public Controller controller;
     public InputField configurationFileName;
     public Text statusText;
     public Button buildTestsButton;
@@ -32,29 +31,38 @@ public class ConfigurationManager : MonoBehaviour
     internal bool loadedOk;
     internal List<TestCase> tests;
 
+    private bool startup;
+
     public void Start() {
         variables = new IVariable[] {
+            new Variable<bool>("auto", ref auto, false, ref uiManager.autoToggle, false, true, RangeType.Closed),
             new Variable<int>("number_of_tests", ref builder.numberOfTests, 8, ref uiManager.numberOfTestsBox, 0, int.MaxValue, RangeType.Closed),
             new Variable<int>("practice_runs", ref manager.practiceRuns, 10, ref uiManager.practiceRunsBox, 0, int.MaxValue, RangeType.Closed),
             new Variable<int>("trial_runs", ref manager.trialRuns, 30, ref uiManager.trialRunsBox, 0, int.MaxValue, RangeType.LeftOpen),
-            new Variable<bool>("auto", ref auto, false, ref uiManager.autoToggle, false, true, RangeType.Closed),
             new Variable<float>("max_ball_height", ref builder.maxBallHeight, 20, ref uiManager.maxBallHeightBox, 0, float.MaxValue, RangeType.LeftOpen),
             new Variable<float>("radius", ref builder.radius, 8, ref uiManager.radiusBox, 0, float.MaxValue, RangeType.LeftOpen),
             new Variable<int>("targets_shape", ref builder.targetsShape, 0, ref uiManager.targetsShapeDropdown, 0, 1, RangeType.Closed),
             new Variable<float>("pause_between_trials", ref manager.pauseBetweenTrials, 2, ref uiManager.pauseBetweenBox, 0, float.MaxValue, RangeType.LeftOpen),
             new Variable<float>("max_speed", ref player.maximumSpeed, 5, ref uiManager.maxSpeedBox, 0, float.MaxValue, RangeType.LeftOpen),
             new Variable<float>("starting_distance", ref manager.startingDistance, 30, ref uiManager.startingDistanceBox, 0, float.MaxValue, RangeType.LeftOpen, manager.Refresh),
-            new Variable<int>("ball_preset", ref ball.preset, 1, ref uiManager.ballPresetDropdown, 0, 5, RangeType.Closed, ball.Refresh),
             new Variable<float>("ball_size", ref ball.size, 0.1f, ref uiManager.ballSizeBox, 0, float.MaxValue, RangeType.LeftOpen, ball.Refresh),
             new Variable<float>("ball_mass", ref ball.mass, 0.14f, ref uiManager.ballMassBox, 0, float.MaxValue, RangeType.LeftOpen, ball.Refresh),
-            new Variable<float>("ball_drag", ref ball.drag, 0.01f, ref uiManager.ballDragBox, 0, 1, RangeType.Open, ball.Refresh)
+            new Variable<float>("ball_drag", ref ball.drag, 0.01f, ref uiManager.ballDragBox, 0, 1, RangeType.Open, ball.Refresh),
+            new Variable<int>("ball_preset", ref ball.preset, 0, ref uiManager.ballPresetDropdown, 0, 5, RangeType.Closed, ball.Refresh),
+            new Variable<int>("controller_type", ref controller.controllerType, 0, ref uiManager.controllerTypeDropdown, 0, 1, RangeType.Closed, controller.Refresh),
+            new Variable<bool>("input_smoothing", ref controller.inputSmoothing, false, ref uiManager.inputSmoothingToggle, false, true, RangeType.Closed, controller.Refresh), 
+            new Variable<int>("smoothing_amount", ref controller.smoothingAmount, 30, ref uiManager.smoothingAmountBox, 0, int.MaxValue, RangeType.Closed, controller.Refresh), 
+            new Variable<int>("input_curve", ref controller.inputCurve, 3, ref uiManager.inputCurveDropdown, 0, 3, RangeType.Closed, controller.Refresh),
+            new Variable<float>("curve_parameter", ref controller.curveParameter, 7, ref uiManager.curveParameterBox, 0, float.MaxValue, RangeType.LeftOpen, controller.DrawCurveGraph) 
         };
         
         tests = new List<TestCase>();
         testsBuilt = false;
 
+        startup = true;
         // Push defaults to UI
         Push();
+        startup = false;
     }
     
     /// <summary>
@@ -65,6 +73,10 @@ public class ConfigurationManager : MonoBehaviour
     /// </summary>
     public void Refresh()
     {
+        // Some variables will ask for refreshes when starting up, don't
+        if (startup)
+            return;
+
         Pull();
         Check();
         Push();
@@ -136,7 +148,7 @@ public class ConfigurationManager : MonoBehaviour
                 IVariable var = Find(varName, variables);
                 if(var == null)
                 {
-                    statusText.text = "Config file contains undefined variable name \"" + tokens[1] + "\". (line:" + (lineNo + 1) + ")";
+                    statusText.text = "Config file contains undefined variable name \"" + varName + "\". (line:" + (lineNo + 1) + ")";
                     return false; // Undefined variable name
                 }
 

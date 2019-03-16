@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.ComponentModel;
-using UnityEngine;
 using UnityEngine.Events;
 
 public class Variable<T> : IVariable where T : struct, IComparable<T>, IEquatable<T>
@@ -30,15 +27,16 @@ public class Variable<T> : IVariable where T : struct, IComparable<T>, IEquatabl
     private TypeConverter converter;
 
     private UnityAction onValueChanged;
-
-
+    
     public Variable(string name, ref Configurable<T> managerVariable, T defaultValue, ref Container uiContainer,
         T rangeFrom, T rangeTo, ConfigurationManager.RangeType rangeType, UnityAction onValueChanged = null)
     {
         // Sanity check
         if(!CheckRange(defaultValue,rangeFrom,rangeTo,rangeType))
             throw new Exception("The default value given is outside the range specified. (" + name + ")");
-
+        if(uiContainer == null)
+            throw new Exception("Null container reference. (" + name + ")");
+        
         // Try to get a type converter
         converter = TypeDescriptor.GetConverter(typeof(T));
 
@@ -121,7 +119,7 @@ public class Variable<T> : IVariable where T : struct, IComparable<T>, IEquatabl
 
         managerVariable.Set(temp);
         container.SetContent(temp.ToString());
-
+        
         if(onValueChanged != null)
             onValueChanged.Invoke();
     }

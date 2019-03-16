@@ -21,7 +21,7 @@ public class ContentLoader : MonoBehaviour
     private Rect prefabRect;
     private float contentHeight;
     
-    public void OnEnable()
+    public void LoadTests()
     {
         if (!manager.testsChanged)
             return;

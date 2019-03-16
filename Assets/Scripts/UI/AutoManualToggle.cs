@@ -10,6 +10,12 @@ public class AutoManualToggle : Container
     public Button loadButton;
     public Button saveButton;
     public Selectable[] settingElements;
+    [Header("Ball fields")]
+    public Dropdown ballPreset;
+    public InputField ballSize;
+    public InputField ballMass;
+    public InputField ballDrag;
+
     private bool interactable;
     
     public bool Interactable
@@ -79,6 +85,12 @@ public class AutoManualToggle : Container
             saveButton.interactable = true;
             foreach (Selectable element in settingElements)
                 element.interactable = true;
+
+            if (ballPreset.value == 0)
+                return;
+            ballSize.interactable = false;
+            ballMass.interactable = false;
+            ballDrag.interactable = false;
         }
     }
 

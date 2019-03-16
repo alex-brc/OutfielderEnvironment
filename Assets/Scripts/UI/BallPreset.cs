@@ -28,7 +28,6 @@ public class BallPreset
         size.Set(presets[preset].size);
         mass.Set(presets[preset].mass);
         drag.Set(presets[preset].drag);
-
     }
 
     private BallPreset(float size, float mass, float drag)

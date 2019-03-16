@@ -20,13 +20,13 @@ public class PathDisplay : MonoBehaviour
         if (position == Vector3.zero)
             return;
         line.positionCount++;
-        line.SetPosition(currentPosition++, position);
+        line.SetPosition(currentPosition++, position.XZ());
     }
 
     public void Clear()
     {
-        line.SetPositions(new Vector3[0]);
         line.positionCount = 0;
+        line.SetPositions(new Vector3[0]);
         currentPosition = 0;
     }
 
