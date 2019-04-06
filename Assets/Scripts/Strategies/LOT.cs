@@ -16,17 +16,19 @@ public class LOT : MonoBehaviour, IStrategy
 
     private void Initialise(Vector3 initialBallVelocity, Vector3 initialBallPosition, Vector3 initialCatcherPosition)
     {
+        // Fix p and q at the start
         p = (initialBallPosition.x - initialCatcherPosition.x)
             / (initialCatcherPosition.z - initialBallPosition.z);
 
         float xpz = initialBallPosition.x + p * initialBallPosition.z;
         q = (initialBallPosition.y / xpz) * (initialCatcherPosition.x * (p * p + 1) - xpz) / (initialCatcherPosition.x - initialBallPosition.x);
-
-        Debug.Log("p:" + p + " q:" + q);
     }
-
+    
     private Vector3 UpdatePrediction(float t, Vector3 ballPosition)
     {
+        // Find the ball position, as described in the paper by Aboufadel
+        // See the report for details on the maths.
+
         float xpz = ballPosition.x + p * ballPosition.z;
         float part = xpz / (ballPosition.y * (p * p + 1) - q * xpz);
 
@@ -36,9 +38,6 @@ public class LOT : MonoBehaviour, IStrategy
             z = (p * ballPosition.y - q * ballPosition.z) * part
         };
 
-        Debug.Log("ball: " + ballPosition);
-        Debug.Log("prediction: " + result);
-
         return result;
     }
 
@@ -46,7 +45,6 @@ public class LOT : MonoBehaviour, IStrategy
     public void Initialise(Rigidbody ballRb, Rigidbody catcherRb)
     {
         Initialise(Shift(ballRb.velocity), Shift(ballRb.position), Shift(catcherRb.position));
-        // Initialise(ballRb.velocity, ballRb.position, catcherRb.position);
         ready = true;
     }
 
@@ -55,8 +53,6 @@ public class LOT : MonoBehaviour, IStrategy
         if (!ready)
             return;
         transform.position = ShiftBack(UpdatePrediction(t - initialTime.Get(), Shift(ballRb.position)));
-        
-        // transform.position = UpdatePrediction(t - initialTime.Get(), ballRb.position);
     }
     
     public Vector3 GetPrediction()
