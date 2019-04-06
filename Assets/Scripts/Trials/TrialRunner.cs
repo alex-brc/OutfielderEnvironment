@@ -18,6 +18,7 @@ public class TrialRunner : MonoBehaviour
     public Button startButton;
     public Button stopButton;
     public Button pauseButton;
+    public Button backButton;
 
     internal Image[] testBackgrounds;
 
@@ -74,6 +75,7 @@ public class TrialRunner : MonoBehaviour
         ball.Initialise();
         StartExperiment();
         startButton.interactable = false;
+        backButton.interactable = false;
     }
 
     public void PauseButton()
@@ -104,6 +106,13 @@ public class TrialRunner : MonoBehaviour
         StopExperiment();
         statusBox.text = "Stopping...";
         statusBox.color = CustomColors.Red;
+
+        // Restore text of pause button and block it
+        pauseButton.transform.Find("Text").GetComponent<Text>().text = "Pause";
+        pauseButton.interactable = false;
+
+        // Make this button inactive
+        stopButton.interactable = false;
     }
 
     private void UpdateBeforeTest()
@@ -188,8 +197,9 @@ public class TrialRunner : MonoBehaviour
         lastResult.ShowTotal(numTrials);
         // And clean hightlight
         testBackgrounds[trialIndexes[CurrentIndex - 1]].color = CustomColors.Background.White;
-        // Reactivate button
+        // Reactivate buttons
         startButton.interactable = true;
+        backButton.interactable = true;
 
         yield return 0;
     }

@@ -3156,6 +3156,7 @@ MonoBehaviour:
   manager: {fileID: 767798211}
   builder: {fileID: 767798214}
   uiManager: {fileID: 767076651}
+  viewManager: {fileID: 1574849964}
   player: {fileID: 1204096363}
   ball: {fileID: 2117675264}
   controller: {fileID: 1046142712}
@@ -6634,8 +6635,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2039626256}
   m_HandleRect: {fileID: 2039626255}
   m_Direction: 0
-  m_Value: 1
-  m_Size: 0.99999887
+  m_Value: 0
+  m_Size: 0.99999917
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -6906,7 +6907,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 331997643}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.63424957
+  m_Size: 0.63425046
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -10361,6 +10362,7 @@ MonoBehaviour:
   genderSlider: {fileID: 200165305}
   setSubjectButton: {fileID: 110794067}
   clearSubjectButton: {fileID: 1221708233}
+  testBuilder: {fileID: 767798214}
   autoManualToggle: {fileID: 1898389876}
   statusText: {fileID: 476948945}
   manager: {fileID: 767798211}
@@ -11156,7 +11158,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &773190230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14075,6 +14077,7 @@ MonoBehaviour:
   startButton: {fileID: 8339536}
   stopButton: {fileID: 1313860930}
   pauseButton: {fileID: 347172451}
+  backButton: {fileID: 1219403883}
 --- !u!225 &1041462934
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -14469,7 +14472,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 619efcba34ef07c4f930a93a8b44ad7a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scale: 0.01
 --- !u!1 &1071484030
 GameObject:
   m_ObjectHideFlags: 0
@@ -21251,7 +21253,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.00035661043, y: 146.29991}
+  m_AnchoredPosition: {x: -0.0000955584, y: 146.30006}
   m_SizeDelta: {x: -0.00024414062, y: 400}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1528695416
@@ -22499,8 +22501,9 @@ MonoBehaviour:
   view3: 259
   UI: {fileID: 1432511008}
   UICamera: {fileID: 600669086}
-  playerCamera: {fileID: 1692801948}
+  copyCamera: {fileID: 1692801948}
   foveCamera: {fileID: 705214162}
+  lightSource: {fileID: 170076734}
 --- !u!114 &1574849965
 MonoBehaviour:
   m_ObjectHideFlags: 0

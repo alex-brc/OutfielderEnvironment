@@ -14,6 +14,7 @@ public class SubjectOperations : MonoBehaviour
     public Slider genderSlider;
     public Button setSubjectButton;
     public Button clearSubjectButton;
+    public TestBuilder testBuilder;
     public AutoManualToggle autoManualToggle;
     public Text statusText;
     public TrialManager manager;
@@ -90,11 +91,11 @@ public class SubjectOperations : MonoBehaviour
         clearSubjectButton.interactable = false;
         statusText.text = "Subject cleared";
         statusText.color = CustomColors.Black;
-        // Also reset the trials
-        manager.ResetTests();
         // Also reset the dataWriter
         dataWriter.ResetWriter();
         // And block load test button
         autoManualToggle.Interactable = false;
+        // Reset tests
+        testBuilder.ResetTests();
     }
 }

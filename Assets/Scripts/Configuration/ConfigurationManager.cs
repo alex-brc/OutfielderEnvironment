@@ -15,6 +15,7 @@ public class ConfigurationManager : MonoBehaviour
     public TrialManager manager;
     public TestBuilder builder;
     public UIManager uiManager;
+    public ViewManager viewManager;
     public PlayerController player;
     public BallController ball;
     public Controller controller;
@@ -30,8 +31,6 @@ public class ConfigurationManager : MonoBehaviour
     internal bool testsBuilt;
     internal bool loadedOk;
     internal List<TestCase> tests;
-    internal Configurable<CVector> lightColor = new Configurable<CVector>("255,244,214");
-    internal Configurable<CVector> lightRotation = new Configurable<CVector>("75,-90,0");
     internal Configurable<CVector> colliderSize = new Configurable<CVector>("2,3,3");
 
     private bool loading = false;
@@ -62,9 +61,11 @@ public class ConfigurationManager : MonoBehaviour
             new Variable<float>("lot_parameter", manager.LOTObject.lotParameter, 0.01f, null, float.MinValue, float.MaxValue, RangeType.LeftOpen),
             new Variable<float>("lot_start_time", manager.LOTObject.initialTime, 1f, null, 0, float.MaxValue, RangeType.Closed),
             new Variable<float>("goac_start_time", manager.GOACObject.initialTime, 0.5f, null, 0, float.MaxValue, RangeType.Closed),
-            new Variable<CVector>("light_color", lightColor, "255,244,214", null, "0,0,0", "255,255,255", RangeType.Closed, SetLightColor),
-            new Variable<CVector>("light_rotation", lightRotation, "75,-90,0" , null, "-360,-360,-360", "360,360,360", RangeType.Open, SetLightRotation),
-            new Variable<CVector>("hitbox_size",  colliderSize, "2,3,3" , null, "0,0,0", "1000,1000,1000", RangeType.Open, SetColliderSize)
+            new Variable<CVector>("light_color", viewManager.lightColor, "255,244,214", null, "0,0,0", "255,255,255", RangeType.Closed, viewManager.SetLightColor),
+            new Variable<CVector>("light_rotation", viewManager.lightRotation, "75,-90,0" , null, "-360,-360,-360", "360,360,360", RangeType.Open, viewManager.SetLightRotation),
+            new Variable<CVector>("hitbox_size",  colliderSize, "2,3,3" , null, "0,0,0", "1000,1000,1000", RangeType.Open, SetColliderSize),
+            new Variable<CVector>("skybox_color", viewManager.skyboxColor, "0,149,255" , null, "0,0,0", "255,255,255", RangeType.Closed, viewManager.SetSkyboxColor),
+            new Variable<bool>("skybox_on", viewManager.skyBoxOn, false, null, false, true, RangeType.Closed, viewManager.SetSkyboxOn),
         };
     }
     #endregion
@@ -369,20 +370,6 @@ public class ConfigurationManager : MonoBehaviour
                 statusText.text = "Unknown test specifier \"" + typeSpecifier + "\"";
                 return false;
         }
-    }
-
-    private void SetLightColor()
-    {
-        Vector3 v = lightColor.Get();
-        Color c = new Color(v.x / 255, v.y / 255, v.z / 255);
-        
-        ball.lightSource.color = c;
-
-    }
-
-    private void SetLightRotation()
-    {
-        ball.lightSource.transform.localEulerAngles = lightRotation.Get();
     }
 
     private void SetColliderSize()
