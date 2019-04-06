@@ -217,28 +217,29 @@ public class TrialRunner : MonoBehaviour
 
         trialIndexes = new int[NumTrials + numPractices];
 
-        // Fill the testIndexes with trialRuns+practiceRuns copies of each test case index
+        Debug.Log("numTests: " + numTests);
+        Debug.Log("numTrials: " + numTrials);
+        Debug.Log("numPractices: " + numPractices);
+
+        // Fill the practices
         for (int i = 0; i < numTests; i++)
-            for (int j = 0; j < (manager.trialRuns.Get() + manager.practiceRuns.Get()); j++)
-                trialIndexes[i * manager.trialRuns.Get() + j] = i;
+            for (int j = 0; j < manager.practiceRuns.Get(); j++)
+                trialIndexes[manager.practiceRuns.Get() * i + j] = i;
+
+        // Fill the trials
+        for(int i = 0; i < numTests; i++)
+            for(int j = 0; j < manager.trialRuns.Get(); j++)
+                trialIndexes[numPractices + manager.trialRuns.Get() * i + j] = i;
+        
+        Debug.Log(PrintList(trialIndexes));
 
         // Shuffle the practices
-        int t,r;
-        for (int i = numPractices - 1; i >= 0; i--) {
-            r = rand.Next(0,i);
-            t = trialIndexes[i];
-            trialIndexes[i] = trialIndexes[r];
-            trialIndexes[r] = t;
-        }
-        // Shuffle the trials
-        for (int i = trialIndexes.Length - 1; i >= numPractices; i--)
-        {
-            r = rand.Next(0, i);
-            t = trialIndexes[i];
-            trialIndexes[i] = trialIndexes[r];
-            trialIndexes[r] = t;
-        }
+        Shuffle(0, numPractices, ref trialIndexes);
 
+        // Shuffle trials
+        Shuffle(numPractices, trialIndexes.Length, ref trialIndexes);
+
+        Debug.Log(PrintList(trialIndexes));
         // Set the catcher
         manager.player = player;
 
@@ -275,5 +276,27 @@ public class TrialRunner : MonoBehaviour
     private void StopExperiment()
     {
         status = Status.Stopped;
+    }
+
+    private void Shuffle(int from, int to, ref int[] list)
+    {
+        int n = to;
+        while (n > from + 1)
+        {
+            n--;
+            int k = rand.Next(n + 1);
+            int t = list[k];
+            list[k] = list[n];
+            list[n] = t;
+            Debug.Log("n: " + n);
+        }
+    }
+
+    private string PrintList(IEnumerable<int> list)
+    {
+        string s = "[";
+        foreach (int e in list)
+            s += " " + e +";";
+       return s + " ]";
     }
 }
