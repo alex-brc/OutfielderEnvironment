@@ -16,7 +16,7 @@ public class SubjectOperations : MonoBehaviour
     public Button clearSubjectButton;
     public AutoManualToggle autoManualToggle;
     public Text statusText;
-    public TrialsManager manager;
+    public TrialManager manager;
     public DataManager dataWriter;
     public ConfigurationManager confManager;
 

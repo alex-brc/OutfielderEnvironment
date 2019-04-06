@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class Controller : MonoBehaviour
 {
-    private enum ControllerType { FOVE = 0, JOYSTICK = 1 }
+    private enum ControllerType { FOVE = 0, JOYSTICK = 1, MOUSE_TEST = 2 }
     private enum InputCurveType { LINEAR = 0, SINUSOIDAL = 1, EXPONENTIAL = 2, SIGMOID = 3 }
 
     [Header("Configurable data")]
@@ -32,6 +32,7 @@ public class Controller : MonoBehaviour
     private Smoother smoother;
 
     internal bool calibrating, calibrated;
+    internal bool foveConnected;
     private Vector3 zeroPosition;
     private Vector3 minimumLean, maximumLean;
     
@@ -44,18 +45,13 @@ public class Controller : MonoBehaviour
     public Vector3 GetInputVector()
     {
         Vector3 input = new Vector3();
-        Debug.Log("Zero pos: " + zeroPosition);
         // Get raw input vector
         input = latestRawInput;
-        Debug.Log("Raw input: " + input);
-        Debug.Log("Relative input: " + (input-zeroPosition));
         // Get calibrated input vector
         input = Calibrated(input);
-        Debug.Log("Calibrated input: " + input);
 
         // Put it through the curve
         input = Curved(input);
-        Debug.Log("Curved input: " + input);
 
         return input;
     }
@@ -119,15 +115,18 @@ public class Controller : MonoBehaviour
         return input;
     }
 
-    private Vector3 GetFOVERawInput()
+    private Vector3 GetMouseTestInput()
     {
-        Vector3 input = new Vector3
+        return new Vector3
         {
             z = Input.mousePosition.y,
             x = Input.mousePosition.x
         };
-        return input;
-        // return fove.transform.localPosition.XZ();
+    }
+
+    private Vector3 GetFOVERawInput()
+    {
+        return fove.transform.localPosition.XZ();
     }
 
     private Vector3 GetJoystickRawInput()
@@ -198,6 +197,7 @@ public class Controller : MonoBehaviour
                     graphInfo.text = "Invalid parameter";
                     return;
                 }
+                graphInfo.text = "Linear Curve";
                 break;
             case (int)InputCurveType.SINUSOIDAL:
                 if (value < 0 || value > 1)
@@ -205,6 +205,7 @@ public class Controller : MonoBehaviour
                     graphInfo.text = "Invalid parameter";
                     return;
                 }
+                graphInfo.text = "Sinusoidal Curve";
                 break;
             case (int)InputCurveType.EXPONENTIAL:
                 if (value < 0)
@@ -212,6 +213,7 @@ public class Controller : MonoBehaviour
                     graphInfo.text = "Invalid parameter";
                     return;
                 }
+                graphInfo.text = "Exponential Curve";
                 break;
             case (int)InputCurveType.SIGMOID:
                 if (value < 1)
@@ -219,6 +221,7 @@ public class Controller : MonoBehaviour
                     graphInfo.text = "Invalid parameter";
                     return;
                 }
+                graphInfo.text = "Sigmoid Curve";
                 siginit = false;
                 break;
         }
@@ -250,6 +253,9 @@ public class Controller : MonoBehaviour
     {
         switch (controllerType.Get())
         {
+            case (int)ControllerType.MOUSE_TEST:
+                controller = ControllerType.MOUSE_TEST;
+                break;
             case (int)ControllerType.FOVE:
                 controller = ControllerType.FOVE;
                 break;
@@ -266,6 +272,9 @@ public class Controller : MonoBehaviour
         // Grab input
         switch (controller)
         {
+            case ControllerType.MOUSE_TEST:
+                latestRawInput = GetMouseTestInput();
+                break;
             case ControllerType.FOVE:
                 latestRawInput = GetFOVERawInput();
                 break;
@@ -284,8 +293,7 @@ public class Controller : MonoBehaviour
             latestInput = GetInputVector();
 
         if (calibrating)
-        {
-            Debug.Log("calibrating");
+        {   
             Vector3 currentLean = latestRawInput - zeroPosition;
             if (currentLean.x < minimumLean.x)
                 minimumLean.x = currentLean.x;
@@ -324,6 +332,9 @@ public class Controller : MonoBehaviour
         SelectInputCurve();
         SelectController();
         smoother = new Smoother(smoothingAmount.Get());
+
+        // Redraw graph
+        DrawCurveGraph(curveParameter.ToString());
     }
 }
 
@@ -354,7 +365,6 @@ class Smoother {
     {
         Input newInput = new Input(input);
         inputs.AddLast(newInput);
-        Debug.Log("added one");
     }
 
     public Vector3 Get()
@@ -364,7 +374,6 @@ class Smoother {
         foreach(Input i in inputs)
             result += i.vector;
         result /= inputs.Count;
-        Debug.Log("retrieved one");
         return result;
     }
 
@@ -376,7 +385,6 @@ class Smoother {
         {
             // This input has expired, remove it
             inputs.RemoveFirst();
-            Debug.Log("removed one");
         }
     }
 }

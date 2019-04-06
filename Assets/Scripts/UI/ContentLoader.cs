@@ -11,12 +11,13 @@ using UnityEngine.UI;
 public class ContentLoader : MonoBehaviour
 {
     [Header("References")]
-    public TrialsManager manager;
-    public AutoTrialRunner runner;
+    public TrialManager manager;
+    public TrialRunner runner;
     public GameObject testPrefab;
 
     internal Image[] testBackgrounds;
 
+    private List<GameObject> testObjects = new List<GameObject>();
     private RectTransform content;
     private Rect prefabRect;
     private float contentHeight;
@@ -25,6 +26,8 @@ public class ContentLoader : MonoBehaviour
     {
         if (!manager.testsChanged)
             return;
+
+        Clear();
 
         content = GetComponent<RectTransform>();
         prefabRect = testPrefab.GetComponent<RectTransform>().rect;
@@ -49,6 +52,8 @@ public class ContentLoader : MonoBehaviour
             newTest.transform.localPosition = new Vector3(360, newHeight, 0);
             // Initialise it with values
             manager.TestCases[i].Initialise(newTest);
+            // Add the object for the builder
+            testObjects.Add(newTest);
             // Done
         }
 
@@ -57,5 +62,15 @@ public class ContentLoader : MonoBehaviour
             = testBackgrounds;
 
         manager.testsChanged = false;
+    }
+
+    public void Clear()
+    {
+        foreach(GameObject obj in testObjects)
+        {
+            Destroy(obj);
+        }
+
+        testObjects = new List<GameObject>();
     }
 }

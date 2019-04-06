@@ -5,15 +5,17 @@ public class FoveCursor : MonoBehaviour
 {
     public void Update()
     {
+        FoveInterface.GazeConvergenceData gaze;
         try
         {
             // every frame, update position to where the player is looking
-            FoveInterface.GazeConvergenceData gaze = FoveInterface.GetGazeConvergence();
-            transform.position = transform.position + gaze.ray.direction * gaze.distance;
+            gaze = FoveInterface.GetGazeConvergence();
         }
         catch (Exception)
         {
-            // nada
+            return;
         }
+
+        transform.position = gaze.ray.GetPoint(1.5f); // 3 units in front of camera
     }
 }

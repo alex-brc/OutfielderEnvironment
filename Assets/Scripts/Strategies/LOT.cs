@@ -8,63 +8,45 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class LOT : MonoBehaviour, IStrategy
 {
-    public float initialTime = 0.5f;
+    public Configurable<float> initialTime = new Configurable<float>(1f);
+    public Configurable<float> lotParameter = new Configurable<float>(0.2f);
     
-    private float a,d,T,deltaPf;
+    private float p, q;
     private bool ready = false;
 
     private void Initialise(Vector3 initialBallVelocity, Vector3 initialBallPosition, Vector3 initialCatcherPosition)
     {
-        // a is the tangent of alpha at the time of fixation
-        Vector3 PosCB = initialCatcherPosition - initialBallPosition.XZ();
-        deltaPf = PosCB.magnitude;
-        a = initialBallPosition.y / PosCB.magnitude;
+        p = (initialBallPosition.x - initialCatcherPosition.x)
+            / (initialCatcherPosition.z - initialBallPosition.z);
 
-        // d is the tangent of delta at the time of fixation
-        // This might be negative of positive, depending on whether
-        // the ball went to the right or left of the catcher.
-        d = PosCB.z / PosCB.x;
+        float xpz = initialBallPosition.x + p * initialBallPosition.z;
+        q = (initialBallPosition.y / xpz) * (initialCatcherPosition.x * (p * p + 1) - xpz) / (initialCatcherPosition.x - initialBallPosition.x);
 
-        // T is a constant depending on the velocity and position
-        // of the ball and catcher at the moment of fixation.
-        // Assume the catcher is stationary at the time of fixation
-        T = (initialBallVelocity.y * deltaPf + initialBallVelocity.x * initialBallPosition.y)
-            / (deltaPf * deltaPf);
-
-        // Note that this T is the equivalent of the K and H of GOAC,
-        // however since in LOT alpha and delta are controlled 
-        // simultaneously, there is just one constant for each of them.
+        Debug.Log("p:" + p + " q:" + q);
     }
 
-    private void UpdatePrediction(float t, Vector3 ballPosition)
+    private Vector3 UpdatePrediction(float t, Vector3 ballPosition)
     {
-        // For a detailed explanation, reference the dissertation
+        float xpz = ballPosition.x + p * ballPosition.z;
+        float part = xpz / (ballPosition.y * (p * p + 1) - q * xpz);
 
-        // The resulting numbers are relative to the ball position. 
-        // We will add this to the ball position to get the catcher position.
-        Vector3 ballToPoint = new Vector3();
-        
-        // The correct alpha angle can be achieved from any point 
-        // that lies on a circle of a specific radius around the ball.
-        // This radius is:
-        float r = ballPosition.y / (a + T * t);
+        Vector3 result = new Vector3()
+        {
+            x = (ballPosition.y - q * ballPosition.x) * part,
+            z = (p * ballPosition.y - q * ballPosition.z) * part
+        };
 
-        // The correct delta angle, in contrast, can be achieved from
-        // any point that lies on a certain line (on which the ball also
-        // lies). The vector along that line, from the ball to the correct
-        // point is ballToPoint. Adjust T with a sign for when the ball's 
-        // initial Z velocity < 0
-        float dTt = (d + d * T * t);
-        ballToPoint.x = r / Mathf.Sqrt(dTt * dTt + 1);
-        ballToPoint.z = ballToPoint.x * dTt;
+        Debug.Log("ball: " + ballPosition);
+        Debug.Log("prediction: " + result);
 
-        // Add that to the ball position to obtain the correct point
-        transform.position = ballPosition.XZ() + ballToPoint;
+        return result;
     }
 
+    // Since the maths here gets fuzzy around 0, we have to shift everything momentarily
     public void Initialise(Rigidbody ballRb, Rigidbody catcherRb)
     {
-        Initialise(ballRb.velocity, ballRb.position, catcherRb.position);
+        Initialise(Shift(ballRb.velocity), Shift(ballRb.position), Shift(catcherRb.position));
+        // Initialise(ballRb.velocity, ballRb.position, catcherRb.position);
         ready = true;
     }
 
@@ -72,7 +54,9 @@ public class LOT : MonoBehaviour, IStrategy
     {
         if (!ready)
             return;
-        UpdatePrediction(t - initialTime, ballRb.position);
+        transform.position = ShiftBack(UpdatePrediction(t - initialTime.Get(), Shift(ballRb.position)));
+        
+        // transform.position = UpdatePrediction(t - initialTime.Get(), ballRb.position);
     }
     
     public Vector3 GetPrediction()
@@ -92,6 +76,16 @@ public class LOT : MonoBehaviour, IStrategy
 
     public float TimeToInit()
     {
-        return initialTime;
+        return initialTime.Get();
+    }
+
+    private Vector3 Shift(Vector3 input)
+    {
+        return Quaternion.Euler(0, 30, 0) * input;
+    }
+
+    private Vector3 ShiftBack(Vector3 input)
+    {
+        return Quaternion.Euler(0, -30, 0) * input;
     }
 }

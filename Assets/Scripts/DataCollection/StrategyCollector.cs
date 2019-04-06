@@ -29,8 +29,8 @@ public class StrategyCollector : Collector
             strategy.GetPrediction().ToCSVFormat()
             };
     }
-    
-    new void Start()
+
+    override protected void Start()
     {
         base.Start();
 
@@ -39,12 +39,12 @@ public class StrategyCollector : Collector
         first = true;
     }
 
-    new public void StartCollecting()
+    override public void StartCollecting()
     {
         base.StartCollecting();
     }
 
-    new public void StopCollecting()
+    override public void StopCollecting()
     {
         base.StopCollecting();
 
@@ -54,7 +54,7 @@ public class StrategyCollector : Collector
         path.Clear();
     }
 
-    new void FixedUpdate()
+    override protected void FixedUpdate()
     {
         // If the writer is off don't write anything. 
         // This is only a thing inside the editor for testing purposes.

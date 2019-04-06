@@ -11,17 +11,23 @@ using UnityEngine;
 [RequireComponent(typeof(FoveInterface))]
 public class FoveCollector : Collector
 {
+    public Transform ball;
+    public Transform cursor;
+
     public override string GetColumns()
     {
         return 
             "Time,Frame," +
-            "LeftEyeClosed,RightEyeClosed" +
-            "RelativePosition_X,RelativePosition_Y,RelativePosition_Z," +
+            "LeftEyeClosed,RightEyeClosed," +
+            "BallScreenPosition_X,BallScreenPosition_Y," +
+            "GazeScreenPosition_X,GazeScreenPosition_Y," +
+            "HeadsetPosition_X,HeadsetPosition_Y,HeadsetPosition_Z," +
             "HeadsetFacing_X,HeadsetFacing_Y,HeadsetFacing_Z," +
             "LeftEyeVector_X,LeftEyeVector_Y,LeftEyeVector_Z," +
             "RightEyeVector_X,RightEyeVector_Y,RightEyeVector_Z," +
             "GazeDirection_X,GazeDirection_Y,GazeDirection_Z," +
-            "GazeDistance,GazeAccuracy\r\n";
+            "GazePoint_X,GazePoint_Y,GazePoint_Z," +
+            "GazeAccuracy\r\n";
     }
 
     public override object[] GetData()
@@ -50,18 +56,26 @@ public class FoveCollector : Collector
         
         // Get convergence data
         FoveInterface.GazeConvergenceData gazeConvergenceData = FoveInterface.GetGazeConvergence();
-        
+
+        // Get screen points
+        Vector3 ballToScreen = GetComponent<Camera>().WorldToScreenPoint(ball.position);
+        Vector3 gazeToScreen = GetComponent<Camera>().WorldToScreenPoint(cursor.position);
+
+
         // Make the list
         return new object[] {
             (Time.time - startingTime),
             (Time.frameCount - startingFrame),
             leftEyeClosed, rightEyeClosed,
+            ballToScreen.x, ballToScreen.y,
+            gazeToScreen.x, gazeToScreen.y,
             transform.position.ToCSVFormat(),
             transform.forward.ToCSVFormat(),
-            leftEye.ToCSVFormat(),
-            rightEye.ToCSVFormat(),
+            transform.TransformDirection(leftEye).ToCSVFormat(),
+            transform.TransformDirection(rightEye).ToCSVFormat(),
             gazeConvergenceData.ray.direction.ToCSVFormat(),
-            gazeConvergenceData.distance, gazeConvergenceData.accuracy
+            gazeConvergenceData.ray.GetPoint(gazeConvergenceData.distance).ToCSVFormat(),
+            gazeConvergenceData.accuracy // Largely useless
         };
     }
 }

@@ -12,7 +12,7 @@ public class ConfigurationManager : MonoBehaviour
         TARGET_TEST = "T", VELOCITY_TEST = "V", PARAMETERS_TEST = "P";
 
     public string floatFormat = "0.##";
-    public TrialsManager manager;
+    public TrialManager manager;
     public TestBuilder builder;
     public UIManager uiManager;
     public PlayerController player;
@@ -30,53 +30,69 @@ public class ConfigurationManager : MonoBehaviour
     internal bool testsBuilt;
     internal bool loadedOk;
     internal List<TestCase> tests;
+    internal Configurable<CVector> lightColor = new Configurable<CVector>("255,244,214");
+    internal Configurable<CVector> lightRotation = new Configurable<CVector>("75,-90,0");
+    internal Configurable<CVector> colliderSize = new Configurable<CVector>("2,3,3");
 
-    private bool startup;
+    private bool loading = false;
+    
+    #region Variable<> Definitions
+    private void DefineVariables()
+    {
+        variables = new IVariable[] {
+            new Variable<bool>("auto", auto, false, uiManager.autoToggle, false, true, RangeType.Closed),
+            new Variable<int>("number_of_tests", builder.numberOfTests, 8, uiManager.numberOfTestsBox, 0, int.MaxValue, RangeType.Closed),
+            new Variable<int>("practice_runs", manager.practiceRuns, 3, uiManager.practiceRunsBox, 0, int.MaxValue, RangeType.Closed),
+            new Variable<int>("trial_runs", manager.trialRuns, 10, uiManager.trialRunsBox, 0, int.MaxValue, RangeType.LeftOpen),
+            new Variable<float>("max_ball_height", builder.maxBallHeight, 20, uiManager.maxBallHeightBox, 0, float.MaxValue, RangeType.LeftOpen),
+            new Variable<float>("radius", builder.radius, 8, uiManager.radiusBox, 0, float.MaxValue, RangeType.LeftOpen),
+            new Variable<int>("targets_shape", builder.targetsShape, 0, uiManager.targetsShapeDropdown, 0, 1, RangeType.Closed),
+            new Variable<float>("pause_between_trials", manager.pauseBetweenTrials, 2, uiManager.pauseBetweenBox, 0, float.MaxValue, RangeType.LeftOpen),
+            new Variable<float>("max_speed", player.maximumSpeed, 5, uiManager.maxSpeedBox, 0, float.MaxValue, RangeType.LeftOpen),
+            new Variable<float>("starting_distance", manager.startingDistance, 30, uiManager.startingDistanceBox, 0, 250, RangeType.Open, manager.Refresh),
+            new Variable<float>("ball_size", ball.size, 0.1f, uiManager.ballSizeBox, 0, float.MaxValue, RangeType.LeftOpen, ball.Refresh),
+            new Variable<float>("ball_mass", ball.mass, 0.14f, uiManager.ballMassBox, 0, float.MaxValue, RangeType.LeftOpen, ball.Refresh),
+            new Variable<float>("ball_drag", ball.drag, 0.01f, uiManager.ballDragBox, 0, 1, RangeType.Open, ball.Refresh),
+            new Variable<int>("ball_preset", ball.preset, 0, uiManager.ballPresetDropdown, 0, 5, RangeType.Closed, ball.Refresh),
+            new Variable<int>("controller_type", controller.controllerType, 0, uiManager.controllerTypeDropdown, 0, 2, RangeType.Closed, controller.Refresh),
+            new Variable<bool>("input_smoothing", controller.inputSmoothing, false, uiManager.inputSmoothingToggle, false, true, RangeType.Closed, controller.Refresh),
+            new Variable<int>("smoothing_amount", controller.smoothingAmount, 30, uiManager.smoothingAmountBox, 0, int.MaxValue, RangeType.Closed, controller.Refresh),
+            new Variable<int>("input_curve", controller.inputCurve, 0, uiManager.inputCurveDropdown, 0, 3, RangeType.Closed, controller.Refresh),
+            new Variable<float>("curve_parameter", controller.curveParameter, 1, uiManager.curveParameterBox, 0, float.MaxValue, RangeType.LeftOpen, controller.Refresh),
+            new Variable<float>("lot_parameter", manager.LOTObject.lotParameter, 0.01f, null, float.MinValue, float.MaxValue, RangeType.LeftOpen),
+            new Variable<float>("lot_start_time", manager.LOTObject.initialTime, 1f, null, 0, float.MaxValue, RangeType.Closed),
+            new Variable<float>("goac_start_time", manager.GOACObject.initialTime, 0.5f, null, 0, float.MaxValue, RangeType.Closed),
+            new Variable<CVector>("light_color", lightColor, "255,244,214", null, "0,0,0", "255,255,255", RangeType.Closed, SetLightColor),
+            new Variable<CVector>("light_rotation", lightRotation, "75,-90,0" , null, "-360,-360,-360", "360,360,360", RangeType.Open, SetLightRotation),
+            new Variable<CVector>("hitbox_size",  colliderSize, "2,3,3" , null, "0,0,0", "1000,1000,1000", RangeType.Open, SetColliderSize)
+        };
+    }
+    #endregion
 
     public void Start() {
-        variables = new IVariable[] {
-            new Variable<bool>("auto", ref auto, false, ref uiManager.autoToggle, false, true, RangeType.Closed),
-            new Variable<int>("number_of_tests", ref builder.numberOfTests, 8, ref uiManager.numberOfTestsBox, 0, int.MaxValue, RangeType.Closed),
-            new Variable<int>("practice_runs", ref manager.practiceRuns, 10, ref uiManager.practiceRunsBox, 0, int.MaxValue, RangeType.Closed),
-            new Variable<int>("trial_runs", ref manager.trialRuns, 30, ref uiManager.trialRunsBox, 0, int.MaxValue, RangeType.LeftOpen),
-            new Variable<float>("max_ball_height", ref builder.maxBallHeight, 20, ref uiManager.maxBallHeightBox, 0, float.MaxValue, RangeType.LeftOpen),
-            new Variable<float>("radius", ref builder.radius, 8, ref uiManager.radiusBox, 0, float.MaxValue, RangeType.LeftOpen),
-            new Variable<int>("targets_shape", ref builder.targetsShape, 0, ref uiManager.targetsShapeDropdown, 0, 1, RangeType.Closed),
-            new Variable<float>("pause_between_trials", ref manager.pauseBetweenTrials, 2, ref uiManager.pauseBetweenBox, 0, float.MaxValue, RangeType.LeftOpen),
-            new Variable<float>("max_speed", ref player.maximumSpeed, 5, ref uiManager.maxSpeedBox, 0, float.MaxValue, RangeType.LeftOpen),
-            new Variable<float>("starting_distance", ref manager.startingDistance, 30, ref uiManager.startingDistanceBox, 0, float.MaxValue, RangeType.LeftOpen, manager.Refresh),
-            new Variable<float>("ball_size", ref ball.size, 0.1f, ref uiManager.ballSizeBox, 0, float.MaxValue, RangeType.LeftOpen, ball.Refresh),
-            new Variable<float>("ball_mass", ref ball.mass, 0.14f, ref uiManager.ballMassBox, 0, float.MaxValue, RangeType.LeftOpen, ball.Refresh),
-            new Variable<float>("ball_drag", ref ball.drag, 0.01f, ref uiManager.ballDragBox, 0, 1, RangeType.Open, ball.Refresh),
-            new Variable<int>("ball_preset", ref ball.preset, 0, ref uiManager.ballPresetDropdown, 0, 5, RangeType.Closed, ball.Refresh),
-            new Variable<int>("controller_type", ref controller.controllerType, 0, ref uiManager.controllerTypeDropdown, 0, 1, RangeType.Closed, controller.Refresh),
-            new Variable<bool>("input_smoothing", ref controller.inputSmoothing, false, ref uiManager.inputSmoothingToggle, false, true, RangeType.Closed, controller.Refresh), 
-            new Variable<int>("smoothing_amount", ref controller.smoothingAmount, 30, ref uiManager.smoothingAmountBox, 0, int.MaxValue, RangeType.Closed, controller.Refresh), 
-            new Variable<int>("input_curve", ref controller.inputCurve, 3, ref uiManager.inputCurveDropdown, 0, 3, RangeType.Closed, controller.Refresh),
-            new Variable<float>("curve_parameter", ref controller.curveParameter, 7, ref uiManager.curveParameterBox, 0, float.MaxValue, RangeType.LeftOpen, controller.DrawCurveGraph) 
-        };
+
+        DefineVariables();
         
         tests = new List<TestCase>();
         testsBuilt = false;
 
-        startup = true;
-        // Push defaults to UI
+        // Push defaults to UI, don't let variables Refresh()
+        // because they will Pull(), and boxes are empty
+        loading = true;
         Push();
-        startup = false;
+        loading = false;
     }
-    
+
     /// <summary>
     /// The refresh cycle is pretty simple conceptually:
     ///     - Pull() values from the UI boxes
     ///     - Check() they're in the correct range
     ///     - Push() them to their respective references (and the UI)
+    ///     On the Push() step, their configured OnRefresh() action is
+    ///     also invoked.
     /// </summary>
     public void Refresh()
     {
-        // Some variables will ask for refreshes when starting up, don't
-        if (startup)
-            return;
-
         Pull();
         Check();
         Push();
@@ -84,6 +100,8 @@ public class ConfigurationManager : MonoBehaviour
 
     public void LoadButton()
     {
+        loading = true;
+
         // Load config file, if any present
         tests = new List<TestCase>();
         if (!Load())
@@ -110,106 +128,24 @@ public class ConfigurationManager : MonoBehaviour
         
         Push(true);
 
+        loading = false;
+
         // Unlock build button
         buildTestsButton.interactable = true;
     }
 
+    #region Core
     /// <summary>
-    /// Reads the configuration files and loads all found variables
-    /// into their respective Variable object. Also builds all found 
-    /// tests and adds them to the test list.
+    /// Attempt to pull values from their respective UI containers
     /// </summary>
-    /// <returns>true if succeeded, false otherwise</returns>
-    private bool Load()
+    private void Pull()
     {
-        // Read the file
-        string[] lines;
-        if (!ReadConfig(out lines))
-            return false;
-        for(int lineNo = 0; lineNo < lines.Length; lineNo++)
-        {
-            string line = lines[lineNo];
-
-            // No assignment marker is not ok
-            if (!line.Contains(ASSIGN_MARKER))
-            {
-                statusText.text = "Line doesn't contain an assignment marker (" + ASSIGN_MARKER + ") (line:" + lineNo + ")";
-                return false;
-            }
-
-            if (line.StartsWith(VARIABLE_MARKER))
-            {
-                // $variable_name should be in [0], value should be in [1]  
-                string[] tokens = line.Split('=');
-                string varName = tokens[0].Substring(1); // without the $$
-                string valueString = tokens[1];
-
-                // Search for the variable in the defined list
-                IVariable var = Find(varName, variables);
-                if(var == null)
-                {
-                    statusText.text = "Config file contains undefined variable name \"" + varName + "\". (line:" + (lineNo + 1) + ")";
-                    return false; // Undefined variable name
-                }
-
-                // We found it, now try to set its value
-                if (!var.TryParse(valueString))
-                {
-                    statusText.text = "Illegal value \"" + tokens[1] + "\" for ball_friction (line:" + (lineNo + 1) + ")";
-                    return false;
-                }
-            }
-            else if (line.StartsWith(TEST_MARKER))
-            {
-                // @type in [0], values in [1]
-                string[] tokens = line.Split('=');
-                string typeSpecifier = tokens[0].Substring(1);
-                string values = tokens[1];
-
-                // Try to make a test
-                if (!TryMakeTest(typeSpecifier, values))
-                {
-                    // Error message displayed already
-                    return false;
-                }
-            }
-        }
-        
-        // Everything alright!
-        return true;
-    }
-
-    private void Save()
-    {
-        // Retrieve and check values from UI
-        foreach(IVariable var in variables)
-        {
-            if (!var.Pull())
-                Debug.Log("Couldn't pull variable " + var.Name());
-
-            if (!var.Check())
-                Debug.Log("Value out of range for variable " + var.Name());
-        }
-
-        // Don't try to save if manual
-        if (!auto.Get())
+        if (loading)
             return;
-
-        // Write everything
-        try
+        
+        foreach (IVariable var in variables)
         {
-            using (StreamWriter writer = new StreamWriter("saved_configuration.cfg"))
-            {
-                // Write all variables
-                foreach(IVariable var in variables)
-                {
-                    writer.WriteLine(var.ToString());
-                }
-            }
-        }
-        catch (IOException e)
-        {
-            Debug.LogError("Couldn't save config. " + e.ToString());
+            var.Pull();
         }
     }
 
@@ -246,19 +182,109 @@ public class ConfigurationManager : MonoBehaviour
             var.Push(loading);
         }
     }
+    #endregion
 
+    #region Load/Save
     /// <summary>
-    /// Attempt to pull values from the UI
+    /// Reads the configuration files and loads all found variables
+    /// into their respective Variable object. Also builds all found 
+    /// tests and adds them to the test list.
     /// </summary>
-    private void Pull()
+    /// <returns>true if succeeded, false otherwise</returns>
+    private bool Load()
     {
+        // Read the file
+        string[] lines;
+        if (!ReadConfig(out lines))
+            return false;
+        for (int lineNo = 0; lineNo < lines.Length; lineNo++)
+        {
+            string line = lines[lineNo];
+
+            // No assignment marker is not ok
+            if (!line.Contains(ASSIGN_MARKER))
+            {
+                statusText.text = "Line doesn't contain an assignment marker (" + ASSIGN_MARKER + ") (line:" + lineNo + ")";
+                return false;
+            }
+
+            if (line.StartsWith(VARIABLE_MARKER))
+            {
+                // $variable_name should be in [0], value should be in [1]  
+                string[] tokens = line.Split('=');
+                string varName = tokens[0].Substring(1); // without the $$
+                string valueString = tokens[1];
+
+                // Search for the variable in the defined list
+                IVariable var = Find(varName, variables);
+                if (var == null)
+                {
+                    statusText.text = "Config file contains undefined variable name \"" + varName + "\". (line:" + (lineNo + 1) + ")";
+                    return false; // Undefined variable name
+                }
+
+                // We found it, now try to set its value
+                if (!var.TryParse(valueString))
+                {
+                    statusText.text = "Illegal value \"" + tokens[1] + "\" for ball_friction (line:" + (lineNo + 1) + ")";
+                    return false;
+                }
+            }
+            else if (line.StartsWith(TEST_MARKER))
+            {
+                // @type in [0], values in [1]
+                string[] tokens = line.Split('=');
+                string typeSpecifier = tokens[0].Substring(1);
+                string values = tokens[1];
+
+                // Try to make a test
+                if (!TryMakeTest(typeSpecifier, values))
+                {
+                    // Error message displayed already
+                    return false;
+                }
+            }
+        }
+        // Everything alright!
+        return true;
+    }
+
+    private void Save()
+    {
+        // Retrieve and check values from UI
         foreach (IVariable var in variables)
         {
-            // Try to pull values from their respective ui containers
-            var.Pull();
+            if (!var.Pull())
+                Debug.Log("Couldn't pull variable " + var.Name());
+
+            if (!var.Check())
+                Debug.Log("Value out of range for variable " + var.Name());
+        }
+
+        // Don't try to save if manual
+        if (!auto.Get())
+            return;
+
+        // Write everything
+        try
+        {
+            using (StreamWriter writer = new StreamWriter("saved_configuration.cfg"))
+            {
+                // Write all variables
+                foreach (IVariable var in variables)
+                {
+                    writer.WriteLine(var.ToString());
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            Debug.LogError("Couldn't save config. " + e.ToString());
         }
     }
-    
+    #endregion
+
+    #region Helper Methods
     private bool ReadConfig(out string[] lines)
     {
         lines = null;
@@ -322,24 +348,10 @@ public class ConfigurationManager : MonoBehaviour
 
     private bool TryMakeTest(string typeSpecifier, string value)
     {
-        // Check vector values
+        // Parse vector
         Vector3 vector = new Vector3();
-        string[] tokens = value.Split(',');
-        // Check format
-        if (tokens.Length != 3)
+        if (!vector.TryParse(value, out vector))
             return false;
-
-        float[] vals = new float[3];
-        for (int i = 0; i < tokens.Length; i++)
-        {
-            if (!float.TryParse(tokens[i], out vals[i]))
-                return false;
-        }
-
-        // Assign contents
-        vector.x = vals[0];
-        vector.y = vals[1];
-        vector.z = vals[2];
 
         // Vector values okay, make test
         switch (typeSpecifier)
@@ -354,9 +366,29 @@ public class ConfigurationManager : MonoBehaviour
                 tests.Add(new TestCase(vector.x, vector.y, vector.z, tests.Count + 1));
                 return true;
             default:
-                statusText.text = "Unknown test identifier \"" + tokens[0] + "\"";
+                statusText.text = "Unknown test specifier \"" + typeSpecifier + "\"";
                 return false;
         }
     }
+
+    private void SetLightColor()
+    {
+        Vector3 v = lightColor.Get();
+        Color c = new Color(v.x / 255, v.y / 255, v.z / 255);
+        
+        ball.lightSource.color = c;
+
+    }
+
+    private void SetLightRotation()
+    {
+        ball.lightSource.transform.localEulerAngles = lightRotation.Get();
+    }
+
+    private void SetColliderSize()
+    {
+        player.transform.GetComponent<BoxCollider>().size = colliderSize.Get();
+    }
+    #endregion
 }
 

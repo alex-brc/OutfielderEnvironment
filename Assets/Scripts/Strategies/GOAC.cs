@@ -8,18 +8,18 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class GOAC : MonoBehaviour, IStrategy
 {
-    public float initialTime = 0.5f;
+    public Configurable<float> initialTime = new Configurable<float>(0.5f);
 
     private Vector3 initialBallPosition;
     private float K, H, deltaP0;
     private bool ready = false;
 
-    private void Initialise(Vector3 initialBallVelocity, Vector3 initialBallPosition, Vector3 initialCatcherPos)
+    private void Initialise(Vector3 initialBallVelocity, Vector3 initialBallPosition, Vector3 initialCatcherPosition)
     {
         this.initialBallPosition = initialBallPosition;
         // Delta P0 is the initial distance between the catcher and
         // the ball
-        deltaP0 = (initialBallPosition - initialCatcherPos).magnitude;
+        deltaP0 = (initialBallPosition - initialCatcherPosition).magnitude;
 
         // K is a constant derived from the initial conditions
         // of the ball. This is used in finding the alpha-radius.
@@ -31,7 +31,7 @@ public class GOAC : MonoBehaviour, IStrategy
         // In fact, due to the simpler nature of finding delta, 
         // H can actually be interpreted as the the angular 
         // velocity of the ball, relative to the catcher.
-        H = initialBallVelocity.z / initialCatcherPos.x;
+        H = initialBallVelocity.z / initialCatcherPosition.x;
 
         // Note that K and H are the equivalent of the T from 
         // LOT, however, since in GOAC alpha and delta are controlled
@@ -74,7 +74,7 @@ public class GOAC : MonoBehaviour, IStrategy
     {
         if (!ready)
             return;
-        UpdatePrediction(t - initialTime, ballRb.position);
+        UpdatePrediction(t - initialTime.Get(), ballRb.position);
     }
     
     public Vector3 GetPrediction()
@@ -94,6 +94,6 @@ public class GOAC : MonoBehaviour, IStrategy
 
     public float TimeToInit()
     {
-        return initialTime;
+        return initialTime.Get();
     }
 }

@@ -6,6 +6,7 @@ using UnityEngine.UI;
 class FoveInitialiser : MonoBehaviour
 {
     public Button startExperimentButton;
+    public Button calibrateButton;
     public Text status;
     public Text controlStatus;
 
@@ -22,8 +23,9 @@ class FoveInitialiser : MonoBehaviour
     IEnumerator Init()
     {
         // Block start button until we have a calibrated fove
-        startExperimentButton.interactable = true;
-        status.text = "Calibrating FOVE...";
+        startExperimentButton.interactable = false;
+        status.text = "Controller not calibrated";
+        controlStatus.text = "Connecting FOVE...";
 
         // If fove is not connected, quit
         bool ok = true;
@@ -42,11 +44,15 @@ class FoveInitialiser : MonoBehaviour
         if (!ok)
         {
             // There is no usable fove device
-            status.text = "No FOVE found";
-            status.color = CustomColors.Red;
+            controlStatus.text = "No FOVE found";
+            controlStatus.color = CustomColors.Red;
         }
         else
         {
+            // Found fove, not calibrated
+            controlStatus.text = "FOVE not calibrated";
+            controlStatus.color = CustomColors.Black;
+
             // Wait till it's calibrated
             while (!FoveInterface.IsEyeTrackingCalibrated())
             {
@@ -59,7 +65,8 @@ class FoveInitialiser : MonoBehaviour
             }
 
             // Fove is OK
-            status.text = "Ready to start";
+            controlStatus.text = "Calibrated";
+            controlStatus.color = CustomColors.SoftGreen;
             startExperimentButton.interactable = true;
         }
     }

@@ -14,11 +14,17 @@ public class DisplayHider : MonoBehaviour
     public void OnValueChanged(bool val)
     {
         target.enabled = !val;
-        foreach(Transform child in target.transform)
+        RecursiveLineRendererEnabled(target.transform, val);
+    }
+
+    private void RecursiveLineRendererEnabled(Transform trans, bool val)
+    {
+        foreach (Transform child in trans)
         {
             LineRenderer lr = child.GetComponent<LineRenderer>();
-            if(lr != null)
+            if (lr != null)
                 lr.enabled = val;
+            RecursiveLineRendererEnabled(child, val);
         }
     }
 }

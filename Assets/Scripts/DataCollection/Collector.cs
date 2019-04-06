@@ -10,6 +10,7 @@ using UnityEngine;
 public abstract class Collector : MonoBehaviour
 {
     public string fileName;
+    private string fullFileName;
 
     [Header("References")]
     public DataManager dataManager;
@@ -21,16 +22,16 @@ public abstract class Collector : MonoBehaviour
     public abstract string GetColumns();
     public abstract object[] GetData();
 
-    protected void Start()
+    virtual protected void Start()
     {
         // Give this to the manager
         dataManager.collectors.Add(this);
     }
 
-    public void StartCollecting()
+    virtual public void StartCollecting()
     {
         // Make the file
-        string fullFileName = dataManager.testPath + "\\" + fileName;
+        fullFileName = dataManager.testPath + "\\" + fileName;
         // Write the columns
         string output = GetColumns();
         File.WriteAllText(fullFileName, output);
@@ -42,10 +43,10 @@ public abstract class Collector : MonoBehaviour
         writerCoroutine = StartCoroutine(WriterRoutine(fullFileName));
     }
 
-    public void StopCollecting()
+    virtual public void StopCollecting()
     {
         // Dump the stringbuilder
-        File.AppendAllText(fileName, stringBuilder.ToString());
+        File.AppendAllText(fullFileName, stringBuilder.ToString());
         stringBuilder = new StringBuilder();
     }
 
@@ -74,7 +75,7 @@ public abstract class Collector : MonoBehaviour
         while (dataManager.Running());
     }
 
-    protected void FixedUpdate()
+    virtual protected void FixedUpdate()
     {
         // If the writer is off don't write anything. 
         // This is only a thing inside the editor for testing purposes.

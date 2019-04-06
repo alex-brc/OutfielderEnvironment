@@ -23,7 +23,7 @@ public class TestBuilder : MonoBehaviour
     public ConfigurationManager confManager;
     public DataManager dataManager;
     public SubjectOperations subjectOp;
-    public TrialsManager manager;
+    public TrialManager manager;
     public Button experimentViewButton;
     public Button controllerViewButton;
 
@@ -150,7 +150,7 @@ public class TestBuilder : MonoBehaviour
             float uiY = targetDisplay.rect.height;
             // The range we have around the catcher for the tests to fit in is
             float yTestRange = targetDisplay.rect.height / 2;
-            float xTestRange = (targetDisplay.rect.width + cTransform.localPosition.x)/2; // since this position is going to be negative
+            float xTestRange = (targetDisplay.rect.width + cTransform.localPosition.x); // since this position is going to be negative
             // Scale for the maximum of the range values
             float biggest = Mathf.Max(Mathf.Abs(max.x), Mathf.Abs(min.x),
                            Mathf.Abs(max.y), Mathf.Abs(min.y));

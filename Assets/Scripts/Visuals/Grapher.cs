@@ -4,46 +4,32 @@ using UnityEngine;
 
 public class Grapher : MonoBehaviour
 {
-    private readonly Vector3 ZERO_POS = new Vector3(-80, +55, 0);
+    private const float GRAPH_HEIGHT = 100, GRAPH_WIDTH = 150;
 
-    public TrialsManager manager;
-    public float accelerationDisplayMultiplier = 20;
-    public int accelerationSamples = 1;
+    public TrialManager manager;
 
     private float maximumTime;
+    private float maxAlpha;
+    private float maxDelta;
 
     private LineRenderer deltaGraph;
     private LineRenderer alphaGraph;
-    private LineRenderer ddeltaGraph;
-    private LineRenderer dalphaGraph;
 
-    private LowPassFilter alphaFilter;
-    private LowPassFilter deltaFilter;
-
-    private Rigidbody baseballRb;
+    private Rigidbody ballRb;
     private Rigidbody catcherRb;
     private bool trialRunning;
 
     public void Start()
     {
-        alphaFilter = new LowPassFilter(accelerationSamples);
-        deltaFilter = new LowPassFilter(accelerationSamples);
-
         foreach (Transform child in transform)
         {
             switch (child.name)
             {
                 case "DeltaGraph":
-                    deltaGraph = child.GetComponent<LineRenderer>();
-                    break;
-                case "dDeltaGraph":
-                    ddeltaGraph = child.GetComponent<LineRenderer>();
+                    deltaGraph = child.Find("Line").GetComponent<LineRenderer>();
                     break;
                 case "AlphaGraph":
-                    alphaGraph = child.GetComponent<LineRenderer>();
-                    break;
-                case "dAlphaGraph":
-                    dalphaGraph = child.GetComponent<LineRenderer>();
+                    alphaGraph = child.Find("Line").GetComponent<LineRenderer>();
                     break;
                 default:
                     break;
@@ -53,21 +39,23 @@ public class Grapher : MonoBehaviour
 
     public void FixedUpdate()
     {
-        if (!trialRunning && manager.trialStatus == TrialsManager.TrialStatus.TrialInProgress)
+        if (!trialRunning && manager.trialStatus == TrialManager.TrialStatus.TrialInProgress)
         {
             // Initialise for a new trial
             trialRunning = true;
             catcherRb = manager.player.GetRigidbody();
-            baseballRb = manager.ballRb.GetComponent<Rigidbody>();
+            ballRb = manager.ballRb.GetComponent<Rigidbody>();
             maximumTime = manager.loadedTestCase.duration;
 
             // Reset linerenderers
             deltaGraph.positionCount = 0;
-            ddeltaGraph.positionCount = 0;
             alphaGraph.positionCount = 0;
-            dalphaGraph.positionCount = 0;
+
+            // Reset maxvalues
+            maxAlpha = 50;
+            maxDelta = 50;
         }
-        else if(trialRunning && manager.trialStatus != TrialsManager.TrialStatus.TrialInProgress)
+        else if(trialRunning && manager.trialStatus != TrialManager.TrialStatus.TrialInProgress)
         {
             // End trial
             trialRunning = false;
@@ -76,47 +64,47 @@ public class Grapher : MonoBehaviour
         if (trialRunning)
         {
             // Add new delta angle
-            float currentT = (Time.time - manager.startingTime) * 150 / maximumTime - 75;
-            float currentDelta = Vector3.Angle(Vector3.right,
-                                          catcherRb.position.XZ());
-            deltaGraph.positionCount++;
-            deltaGraph.SetPosition(
-                deltaGraph.positionCount - 1,
-                ZERO_POS + new Vector3(currentT,
-                            currentDelta));
+            float currentT = Time.time - manager.startingTime;
+            Vector3 catcherToBall = ballRb.position.XZ() - catcherRb.position.XZ();
+            float currentDelta = Vector3.Angle(-Vector3.right, catcherToBall);
+            AddToLine(currentDelta, currentT, ref maxDelta, deltaGraph);
 
             // Add new alpha angle
-            float currentAlpha = Vector3.Angle(baseballRb.position.XZ() - catcherRb.position,
-                                               baseballRb.position - catcherRb.position);
-            alphaGraph.positionCount++;
-            alphaGraph.SetPosition(
-                alphaGraph.positionCount - 1,
-                ZERO_POS + new Vector3(currentT,
-                            currentAlpha));
-
-            // If first position, skip acceleration
-            if (alphaGraph.positionCount == 1)
-                return;
-
-            // Add new delta acceleration
-            Vector3 previousDelta = deltaGraph.GetPosition(deltaGraph.positionCount - 2);
-            float deltaT = currentT - previousDelta.x;
-            float deltaDelta = currentDelta - previousDelta.y;
-            ddeltaGraph.positionCount++;
-            ddeltaGraph.SetPosition(
-                ddeltaGraph.positionCount - 1,
-                ZERO_POS + new Vector3(currentT,
-                            deltaFilter.Filter(deltaDelta / deltaT) * accelerationDisplayMultiplier));
-
-            // Add new alpha acceleration
-            Vector3 previousAlpha = alphaGraph.GetPosition(alphaGraph.positionCount - 2);
-            float deltaAlpha = currentAlpha - previousAlpha.y;
-            dalphaGraph.positionCount++;
-            dalphaGraph.SetPosition(
-                dalphaGraph.positionCount - 1,
-                ZERO_POS + new Vector3(currentT,
-                            alphaFilter.Filter(deltaAlpha / deltaT) * accelerationDisplayMultiplier));
+            float currentAlpha = Vector3.Angle(ballRb.position.XZ() - catcherRb.position,
+                                               ballRb.position - catcherRb.position);
+            AddToLine(currentAlpha, currentT, ref maxAlpha, alphaGraph);
         }
+    }
+    
+    private void AddToLine(float value, float time, ref float maxValue, LineRenderer line)
+    {
+        if(Mathf.Abs(value) > maxValue)
+        {
+            float oldMax = maxValue;
+            do
+            {
+                // Increase max value by 20% so we don't do this every frame
+                maxValue = maxValue + maxValue * 0.2f;
+            }
+            while (Mathf.Abs(value) > maxValue);
+            
+            // Rescale all the heights in the line
+            for (int i = 0; i < line.positionCount; i++)
+            {
+                Vector3 currentPos = line.GetPosition(i);
+                // Rescale
+                currentPos.y = currentPos.y * oldMax / maxValue;
+                line.SetPosition(i, currentPos);
+            }
+        }
+
+        float ajustedTime = time * GRAPH_WIDTH / maximumTime;
+        float adjustedValue = value * (GRAPH_HEIGHT/2) / maxValue;
+       
+        Vector3 positionToAdd = new Vector3(ajustedTime, adjustedValue);
+
+        line.positionCount++;
+        line.SetPosition(line.positionCount - 1, positionToAdd);
     }
 }
 

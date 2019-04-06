@@ -25,24 +25,28 @@ public abstract class Container : MonoBehaviour, IPointerEnterHandler
 
     public void Flash(Color flashColor)
     {
-        StartCoroutine(Animation(flashColor));
+        if(background != null)
+            StartCoroutine(Animation(flashColor));
     } 
 
     private IEnumerator Animation(Color flashColor)
     {
         // Default background color
-        Color color = new Color(168f / 255, 168f / 255, 168f / 255, 125f / 255);
+        Color color = new Color(200f / 255, 200f / 255, 200f / 255, 0.49f);
+        float rDiff = flashColor.r - 200f/255;
+        float gDiff = flashColor.g - 200f/255;
+        float bDiff = flashColor.b - 200f/255;
 
-        // Flash to red
-        for (float i = 1; i >= 0; i -= Time.deltaTime)
-        {
-            background.color = new Color(flashColor.r, flashColor.g, flashColor.b, i);
-            yield return null;
-        }
-        // Flash back
+        // Fade to flashColor
         for (float i = 0; i <= 1; i += Time.deltaTime)
         {
-            background.color = new Color(color.r, color.g, color.b, i);
+            background.color = new Color(200f / 255 + i * rDiff, 200f / 255 + i * gDiff, 200f / 255 + i * bDiff, 0.49f);
+            yield return null;
+        }
+        // Fade back
+        for (float i = 0; i <= 1; i += Time.deltaTime)
+        {
+            background.color = new Color(flashColor.r - i * rDiff, flashColor.g - i * gDiff, flashColor.b - i * bDiff, 0.49f);
             yield return null;
         }
     }

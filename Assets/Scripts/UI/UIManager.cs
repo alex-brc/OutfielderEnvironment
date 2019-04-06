@@ -4,8 +4,9 @@ using UnityEngine.UI;
 public class UIManager : MonoBehaviour
 {
     // Reference all of the UI elements linked to a variable
+    [Header("Configurable references")]
+    public Container autoToggle;
     public Container
-        autoToggle,
         startingDistanceBox,
         maxSpeedBox,
         numberOfTestsBox,
@@ -25,11 +26,9 @@ public class UIManager : MonoBehaviour
         smoothingAmountBox,
         curveParameterBox;
 
+    [Header("Interactions")]
     public InputField smoothingAmountField;
-    public InputField ballPresetField;
-    public InputField ballSizeField;
-    public InputField ballMassField;
-    public InputField ballDragField;
+    public Button eyeCalibrateButton;
 
     public static void Show(CanvasGroup page)
     {
@@ -53,19 +52,11 @@ public class UIManager : MonoBehaviour
             smoothingAmountField.interactable = false;
     }
 
-    public void BallPresetOnValueChanged(int value)
+    public void ControllerTypeOnValueChanged(int value)
     {
-        if(value == 0)
-        {
-            ballMassField.interactable = true;
-            ballSizeField.interactable = true;
-            ballDragField.interactable = true;
-        }
+        if (value == 0) // FOVE
+            eyeCalibrateButton.interactable = true;
         else
-        {
-            ballMassField.interactable = false;
-            ballSizeField.interactable = false;
-            ballDragField.interactable = false;
-        }
+            eyeCalibrateButton.interactable = false;
     }
 }

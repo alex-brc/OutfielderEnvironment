@@ -6,7 +6,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Text))]
 public class TimerDisplay : MonoBehaviour
 {
-    public TrialsManager manager;
+    public TrialManager manager;
 
     private Text text;
     private void Start()
@@ -16,7 +16,7 @@ public class TimerDisplay : MonoBehaviour
 
     private void Update()
     {
-        if (manager.trialStatus == TrialsManager.TrialStatus.TrialInProgress)
+        if (manager.trialStatus == TrialManager.TrialStatus.TrialInProgress)
             text.text = "T: " + (Time.time - manager.startingTime).ToString("0.##");
     }
 }

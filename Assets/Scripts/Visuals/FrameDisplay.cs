@@ -6,7 +6,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Text))]
 public class FrameDisplay : MonoBehaviour
 {
-    public TrialsManager manager;
+    public TrialManager manager;
 
     private Text text;
     private void Start()
@@ -16,7 +16,7 @@ public class FrameDisplay : MonoBehaviour
 
     private void Update()
     {
-        if (manager.trialStatus == TrialsManager.TrialStatus.TrialInProgress)
+        if (manager.trialStatus == TrialManager.TrialStatus.TrialInProgress)
             text.text = "F: " + (Time.frameCount - manager.startingFrame);
     }
 }

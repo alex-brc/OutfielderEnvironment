@@ -36,7 +36,7 @@ public class GOACRobot : MonoBehaviour
 
     [Header("References")]
     public GameObject baseball;
-    public TrialsManager manager;
+    public TrialManager manager;
 
     [Header("Debug Tools")]
     public RadiusDisplay radiusDisplay;

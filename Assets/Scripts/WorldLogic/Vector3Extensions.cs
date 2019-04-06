@@ -8,6 +8,28 @@ using UnityEngine;
 /// </summary>
 public static class Vector3Extensions
 {
+
+    public static bool TryParse(this Vector3 vector, string input, out Vector3 output)
+    {
+        string[] tokens = input.Split(',');
+        output = new Vector3();
+        // Check format
+        if (tokens.Length != 3)
+            return false;
+
+        float[] vals = new float[3];
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            if (!float.TryParse(tokens[i], out vals[i]))
+                return false;
+        }
+
+        // Make the vector
+        output = new Vector3(vals[0], vals[1], vals[2]);
+
+        return true;
+    }
+
     /// <summary>
     /// Returns a string suitable for inserting in a CSV line.
     /// This outputs just the x,y,z coordinates separated by commas.
@@ -15,6 +37,11 @@ public static class Vector3Extensions
     public static string ToCSVFormat(this Vector3 vector)
     {
         return "" + vector.x + "," + vector.y + "," + vector.z;
+    }
+
+    public static string ToCSVFormat(this Vector2 vector)
+    {
+        return "" + vector.x + "," + vector.y;
     }
 
     public static string ToCSVFormat(this SFVR_Vec3 vector)

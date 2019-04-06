@@ -5,7 +5,7 @@ public class ProgressBar : MonoBehaviour
 {
     private const int TRIALBAR_OFFSET = 10;
     [Header("References")]
-    public AutoTrialRunner runner;
+    public TrialRunner runner;
 
     private RectTransform practiceBar;
     private RectTransform trialsBar;

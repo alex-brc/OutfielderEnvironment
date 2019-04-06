@@ -1,8 +1,9 @@
 ﻿using System;
 using System.ComponentModel;
+using UnityEngine;
 using UnityEngine.Events;
 
-public class Variable<T> : IVariable where T : struct, IComparable<T>, IEquatable<T>
+public class Variable<T> : IVariable where T : IComparable<T>, IEquatable<T>
 {
     /// <summary>
     /// A Default variable has the value set as default from the configuration manager.
@@ -13,12 +14,12 @@ public class Variable<T> : IVariable where T : struct, IComparable<T>, IEquatabl
     private Type type;
 
     public readonly string name;
-    public Container container;
+    public Container uiContainer;
     /// <summary>
     /// This should be a wrapper of a primitive
     /// (i.e. Integer, Float, etc.)
     /// </summary>
-    private Configurable<T> managerVariable;
+    private Configurable<T> externalVariable;
 
     private T value, defaultValue;
     private T rangeFrom, rangeTo;
@@ -28,32 +29,30 @@ public class Variable<T> : IVariable where T : struct, IComparable<T>, IEquatabl
 
     private UnityAction onValueChanged;
     
-    public Variable(string name, ref Configurable<T> managerVariable, T defaultValue, ref Container uiContainer,
+    public Variable(string name, Configurable<T> externalVariable, T defaultValue, Container uiContainer,
         T rangeFrom, T rangeTo, ConfigurationManager.RangeType rangeType, UnityAction onValueChanged = null)
     {
         // Sanity check
         if(!CheckRange(defaultValue,rangeFrom,rangeTo,rangeType))
             throw new Exception("The default value given is outside the range specified. (" + name + ")");
-        if(uiContainer == null)
-            throw new Exception("Null container reference. (" + name + ")");
         
         // Try to get a type converter
         converter = TypeDescriptor.GetConverter(typeof(T));
 
         // Check if it can parse from string
-        if (converter == null || !converter.CanConvertFrom(typeof(string)))
+        if (typeof(T) != typeof(CVector) && (converter == null || !converter.CanConvertFrom(typeof(string))))
             throw new Exception("Type " + typeof(T).ToString() + " does not support parsing from a string.");
         
         this.defaultValue = defaultValue;
         this.name = name;
-        this.managerVariable = managerVariable;
+        this.externalVariable = externalVariable;
         type = Type.Default;
 
         this.rangeFrom = rangeFrom;
         this.rangeTo = rangeTo;
         this.rangeType = rangeType;
 
-        this.container = uiContainer;
+        this.uiContainer = uiContainer;
 
         this.onValueChanged = onValueChanged;
     }
@@ -72,7 +71,7 @@ public class Variable<T> : IVariable where T : struct, IComparable<T>, IEquatabl
     /// </summary>
     /// <returns>true if the value was set, false otherwise</returns>
     public bool TryParse(string input)
-    {
+    {   
         T t;
         try
         {
@@ -98,7 +97,7 @@ public class Variable<T> : IVariable where T : struct, IComparable<T>, IEquatabl
     /// Updates the variable in the manager with the value stored,
     /// as well as the UI.
     /// </summary>
-    public void Push(bool flashDefaults = false)
+    public void Push(bool flash = false)
     {
         T temp = default(T);
         // If default, push default value
@@ -106,19 +105,21 @@ public class Variable<T> : IVariable where T : struct, IComparable<T>, IEquatabl
         {
             case Type.Default:
                 temp = defaultValue;
-                // Flash red, this isn't recommended
-                if(flashDefaults)
-                    container.Flash(CustomColors.SoftRed);
+                // Flash red to warn this was pushed but not set
+                if (flash && uiContainer != null)
+                    uiContainer.Flash(CustomColors.SoftRed);
                 break;
             case Type.Checked:
                 temp = value;
+                if (flash && uiContainer != null)
+                    uiContainer.Flash(CustomColors.SoftGreen);
                 break;
             case Type.Unchecked:
                 throw new Exception("Attempted to assign unchecked varaible to manager. (" + name + ")");
         }
-
-        managerVariable.Set(temp);
-        container.SetContent(temp.ToString());
+        externalVariable.Set(temp);
+        if(uiContainer != null)
+            uiContainer.SetContent(temp.ToString());
         
         if(onValueChanged != null)
             onValueChanged.Invoke();
@@ -130,7 +131,10 @@ public class Variable<T> : IVariable where T : struct, IComparable<T>, IEquatabl
     /// </summary>
     public bool Pull()
     {
-        return TryParse(container.RetrieveContent());
+        if (uiContainer == null)
+            return true;
+
+        return TryParse(uiContainer.RetrieveContent());
     }
 
     /// <summary>

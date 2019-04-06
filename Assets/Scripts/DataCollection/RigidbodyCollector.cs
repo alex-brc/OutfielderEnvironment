@@ -15,8 +15,6 @@ public class RigidbodyCollector : Collector
         return 
             "Time,Frame," +
             "Position_X,Position_Y,Position_Z," +
-            "Rotation_X,Rotation_Y,Rotation_Z," +
-            "ForwardVector_X,ForwardVector_Y,ForwardVector_Z," +
             "Velocity_X,Velocity_Y,Velocity_Z\r\n";
     }
 
@@ -25,9 +23,8 @@ public class RigidbodyCollector : Collector
         return new object[] {
             (Time.time - startingTime),
             (Time.frameCount - startingFrame),
-            gameObject.transform.position.ToCSVFormat(),
-            gameObject.transform.rotation.eulerAngles.ToCSVFormat(),
-            gameObject.GetComponent<Rigidbody>().velocity.ToCSVFormat()};
+            transform.position.ToCSVFormat(),
+            GetComponent<Rigidbody>().velocity.ToCSVFormat()};
     }
     
 }

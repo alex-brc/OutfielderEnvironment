@@ -14,7 +14,6 @@ public class RadiusDisplay : MonoBehaviour
 {
     public GameObject target;
     
-    [Range(0, 50)]
     public int segments = 50;
 
     internal float radius = 5;

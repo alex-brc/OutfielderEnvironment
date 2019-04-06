@@ -8,6 +8,16 @@ public class Configurable<T> : IEquatable<T>, IEquatable<Configurable<T>> where 
 
     private T value;
 
+    public Configurable()
+    {
+        // nothing
+    }
+
+    public Configurable(T value)
+    {
+        this.value = value;
+    }
+
     public void Set(T value)
     {
         this.value = value;

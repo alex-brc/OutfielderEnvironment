@@ -17,7 +17,8 @@ public class ViewManager : MonoBehaviour
     [Header("References")]
     public CanvasGroup UI;
     public Camera UICamera;
-    public Camera playerCamera; 
+    public Camera playerCamera;
+    public Camera foveCamera;
 
     // Some rough state management out here, but it's stable
     void Update()
@@ -43,6 +44,14 @@ public class ViewManager : MonoBehaviour
             playerCamera.enabled = true;
             UICamera.enabled = false;
         }
+    }
+
+    public void ResetView()
+    {
+        UIManager.Show(UI);
+
+        playerCamera.enabled = false;
+        UICamera.enabled = true;
     }
 
     public void Refresh(float distance)

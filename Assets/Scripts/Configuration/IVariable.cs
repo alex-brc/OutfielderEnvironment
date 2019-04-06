@@ -8,8 +8,8 @@ public interface IVariable
     bool TryParse(string s);
     string Name();
     string ValueString();
-    void Push(bool flashDefaults);
     bool Pull();
     bool Check();
+    void Push(bool flash);
     string ToString();
 }
