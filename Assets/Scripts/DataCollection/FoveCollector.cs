@@ -32,19 +32,20 @@ public class FoveCollector : Collector
 
     public override object[] GetData()
     {
-        // Get eye status
-        bool leftEyeClosed = false;
-        bool rightEyeClosed = false;
+        // Get eye status, use 0,1 cause it's easier to handle in 
+        // programs like MATLAB
+        int leftEyeClosed = 0;
+        int rightEyeClosed = 0;
         switch (FoveInterface.CheckEyesClosed())
         {
             case EFVR_Eye.Both:
-                leftEyeClosed = rightEyeClosed = true;
+                leftEyeClosed = rightEyeClosed = 1;
                 break;
             case EFVR_Eye.Left:
-                leftEyeClosed = true;
+                leftEyeClosed = 1;
                 break;
             case EFVR_Eye.Right:
-                rightEyeClosed = true;
+                rightEyeClosed = 1;
                 break;
             default: // neither
                 break;
