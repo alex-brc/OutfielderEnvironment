@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿    using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -78,7 +78,7 @@ public class Controller : MonoBehaviour
                 return 1;
             case InputCurveType.SINUSOIDAL:
                 if (x * x < curveParameter.Get())
-                    return -0.5f * Mathf.Cos(Mathf.PI * x * x / curveParameter.Get()) + 0.5f;
+                    return -0.5f * Mathf.Cos(Mathf.PI * x * x / curveParameter.Get() * curveParameter.Get()) + 0.5f;
                 return 1;
             case InputCurveType.EXPONENTIAL:
                 return Mathf.Pow(x, curveParameter.Get()); // This can get heavy for big powers

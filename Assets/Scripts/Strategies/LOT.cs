@@ -9,7 +9,6 @@ using UnityEngine;
 public class LOT : MonoBehaviour, IStrategy
 {
     public Configurable<float> initialTime = new Configurable<float>(1f);
-    public Configurable<float> lotParameter = new Configurable<float>(0.2f);
     
     private float p, q;
     private bool ready = false;

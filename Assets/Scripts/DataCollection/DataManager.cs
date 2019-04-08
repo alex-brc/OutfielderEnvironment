@@ -154,9 +154,11 @@ public class DataManager : MonoBehaviour
         string fileName = testPath + "\\results.csv";
         File.WriteAllText(fileName, cols);
 
+        int result = caught ? 1 : 0; 
+
         // Then results
         object[] vals = {
-             caught, (Time.time - startingTime), (Time.frameCount - startingFrame)};
+             result, (Time.time - startingTime), (Time.frameCount - startingFrame)};
         File.AppendAllText(fileName, ToCSVLine(vals));
     }
 
