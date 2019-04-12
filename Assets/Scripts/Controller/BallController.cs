@@ -75,13 +75,26 @@ public class BallController : MonoBehaviour
     private void FixedUpdate()
     {
         Vector3 newPlayerPos = manager.player.transform.position;
+        Vector3 hmdPos = new Vector3(0,0,0);
+        try
+        {
+            hmdPos = FoveInterface.GetHMDPosition();
+        }
+        catch (Exception)
+        {
+            // No FOVE connected
+        }
 
         if (scriptCompiled && manager.trialStatus == TrialManager.TrialStatus.TrialInProgress)
+        {
+            Debug.Log("Here");
             customScript.WhileRunning.Invoke(scriptInstance, new object[] {
             manager.loadedTestCase.testNumber,
             Time.time - manager.startingTime,
             newPlayerPos,
-            FoveInterface.GetHMDPosition()});
+            hmdPos});
+
+        }
     }
 
     public void After(bool caught)

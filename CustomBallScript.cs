@@ -90,7 +90,7 @@ public class BallScript
         /* !END OF CRITICAL CODE! */
 
         // Initialise your variables here //
-
+        Debug.Log("Created script");
         
     }
     /* <<<END OF INITIALISATION SECTION>>> */
@@ -142,7 +142,6 @@ public class BallScript
     public void WhileRunning(int currentTest, float currentTime, Vector3 catcherPosition, Vector3 headsetPosition)
     {
         // Insert your code here
-
     }
 
     /* The BeforeCountdown() method is called before a new trial is 
@@ -155,7 +154,6 @@ public class BallScript
     public void BeforeCountdown()
     {
         // Insert your code here
-
     }
 
     /* The BeforeLaunch() method is called before a new trial is 
@@ -166,7 +164,6 @@ public class BallScript
     public void BeforeLaunch()
     {
         // Insert your code here
-
     }
 
     /* The After() method is called at the end of a trial. 
@@ -181,7 +178,6 @@ public class BallScript
     public void After(bool caught)
     {
         // Insert your code here
-
     }
     /* <<<END OF SCRIPT FUNCTIONS SECTION>>>*/
     //////////////////////////////////

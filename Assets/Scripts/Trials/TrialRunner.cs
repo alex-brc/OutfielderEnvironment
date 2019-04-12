@@ -24,7 +24,7 @@ public class TrialRunner : MonoBehaviour
 
     private volatile Status status;
     private Coroutine runner;
-    private int[] trialIndexes;
+    private List<int> trialIndexes;
     private System.Random rand;
     private bool pausing;
     private int currentIndex;
@@ -140,11 +140,11 @@ public class TrialRunner : MonoBehaviour
     /// Coroutine that handles loading and unloading, as 
     /// well as starting and stopping them.
     /// </summary>
-    private IEnumerator Runner(int[] testIndexes)
+    private IEnumerator Runner(List<int> testIndexes)
     {
         currentIndex = 0;
         while((status == Status.Running || status == Status.Paused)
-            && currentIndex < testIndexes.Length)
+            && currentIndex < testIndexes.Count)
         {
             if (status == Status.Paused)
             {
@@ -183,7 +183,7 @@ public class TrialRunner : MonoBehaviour
         }
 
         // Stopped or finished?
-        if (currentIndex == testIndexes.Length) // Then it finished
+        if (currentIndex == testIndexes.Count) // Then it finished
         {
             status = Status.Finished;
             statusBox.text = "Finished OK";
@@ -215,31 +215,30 @@ public class TrialRunner : MonoBehaviour
         numTrials = manager.trialRuns.Get() * numTests;
         numPractices = manager.practiceRuns.Get() * numTests;
 
-        trialIndexes = new int[NumTrials + numPractices];
-
-        Debug.Log("numTests: " + numTests);
-        Debug.Log("numTrials: " + numTrials);
-        Debug.Log("numPractices: " + numPractices);
+        trialIndexes = new List<int>();
+        
+        List<int> practiceList = new List<int>();
+        List<int> trialList = new List<int>();
 
         // Fill the practices
         for (int i = 0; i < numTests; i++)
             for (int j = 0; j < manager.practiceRuns.Get(); j++)
-                trialIndexes[manager.practiceRuns.Get() * i + j] = i;
+                practiceList.Add(i);
 
         // Fill the trials
-        for(int i = 0; i < numTests; i++)
-            for(int j = 0; j < manager.trialRuns.Get(); j++)
-                trialIndexes[numPractices + manager.trialRuns.Get() * i + j] = i;
+        for (int i = 0; i < numTests; i++)
+            for (int j = 0; j < manager.trialRuns.Get(); j++)
+                trialList.Add(i);
         
-        Debug.Log(PrintList(trialIndexes));
-
         // Shuffle the practices
-        Shuffle(0, numPractices, ref trialIndexes);
-
+        Shuffle(ref practiceList);
         // Shuffle trials
-        Shuffle(numPractices, trialIndexes.Length, ref trialIndexes);
-
-        Debug.Log(PrintList(trialIndexes));
+        Shuffle(ref trialList);
+        
+        // Concatenate the two
+        trialIndexes.AddRange(practiceList);
+        trialIndexes.AddRange(trialList);
+        
         // Set the catcher
         manager.player = player;
 
@@ -278,17 +277,16 @@ public class TrialRunner : MonoBehaviour
         status = Status.Stopped;
     }
 
-    private void Shuffle(int from, int to, ref int[] list)
+    private void Shuffle(ref List<int> list)
     {
-        int n = to;
-        while (n > from + 1)
+        int n = list.Count;
+        while (n > 1)
         {
             n--;
             int k = rand.Next(n + 1);
             int t = list[k];
             list[k] = list[n];
             list[n] = t;
-            Debug.Log("n: " + n);
         }
     }
 
