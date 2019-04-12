@@ -28,7 +28,7 @@ public class ScriptCompiler
             }
 
             // Try to compile
-            CSharpCodeProvider provider = new CSharpCodeProvider();
+            CSharpCompiler.CodeCompiler provider = new CSharpCompiler.CodeCompiler();
             CompilerParameters parameters = new CompilerParameters();
 
             // Assembly references
