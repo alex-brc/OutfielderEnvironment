@@ -28,7 +28,7 @@ public class ScriptCompiler
             }
 
             // Try to compile
-            CSharpCompiler.CodeCompiler compiler = new CSharpCompiler.CodeCompiler();
+            CSharpCodeProvider provider = new CSharpCodeProvider();
             CompilerParameters parameters = new CompilerParameters();
 
             // Assembly references
@@ -41,7 +41,7 @@ public class ScriptCompiler
             parameters.GenerateInMemory = true;
 
             // Compile the source
-            CompilerResults results = compiler.CompileAssemblyFromSource(parameters, code);
+            CompilerResults results = provider.CompileAssemblyFromSource(parameters, code);
 
             if (results.Errors.HasErrors)
             {

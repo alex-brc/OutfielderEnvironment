@@ -1,0 +1,6 @@
+System.TypeInitializationException: An exception was thrown by the type initializer for Mono.CSharp.CSharpCodeCompiler ---> System.IO.FileNotFoundException: Windows mono path not found: D:\OutfielderEnvironment\mono\mono\mini\mono.exe
+  at Mono.CSharp.CSharpCodeCompiler..cctor () [0x00000] in <filename unknown>:0 
+  --- End of inner exception stack trace ---
+  at Microsoft.CSharp.CSharpCodeProvider.CreateCompiler () [0x00000] in <filename unknown>:0 
+  at System.CodeDom.Compiler.CodeDomProvider.CompileAssemblyFromSource (System.CodeDom.Compiler.CompilerParameters options, System.String[] fileNames) [0x00000] in <filename unknown>:0 
+  at ScriptCompiler.CompileBallScript (.CustomCompilerResults& output) [0x00000] in <filename unknown>:0 
